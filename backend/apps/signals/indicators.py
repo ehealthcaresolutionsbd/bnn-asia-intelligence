@@ -39,6 +39,7 @@ from apps.sources.models import DataSource
 from .models import CountryVolumeDaily, IngestedDay, SignalDaily
 
 MIN_EVENTS = 300
+MIN_WEEKS = 4          # at least 4 ISO weeks with data before a value (and its interval) is published
 BOOTSTRAP_B = 1000
 CI_LEVEL = 0.90
 METHOD_VERSION = "v2"
@@ -110,7 +111,7 @@ def build_signal_indicators(period, *, today: dt.date | None = None) -> dict:
         return summary
     start = period.start_date
     label = f"BNN signals {period.name}"[:40]
-    status = "final" if today > period.end_date else "preliminary"
+    status = "final" if end >= period.end_date else "preliminary"   # final only once 31 Dec is ingested
 
     # Daily volume and signals → per-country, per-day dicts.
     vol = defaultdict(dict)          # cid -> day -> (events, articles)
@@ -153,7 +154,7 @@ def build_signal_indicators(period, *, today: dt.date | None = None) -> dict:
                     den_w = sum((weekly(sig[c.id][k]) for k in den_spec), np.zeros(n_weeks))
                     den_art = sum(articles(sig[c.id][k]) for k in den_spec)
                 den_total = int(den_w.sum())
-                if total_events < MIN_EVENTS or den_total == 0:
+                if total_events < MIN_EVENTS or den_total == 0 or int((v_week > 0).sum()) < MIN_WEEKS:
                     IndicatorObservation.objects.filter(indicator=ind, country=c, reporting_period=period,
                                                         source=src).delete()
                     summary["missing"] += 1
@@ -167,7 +168,7 @@ def build_signal_indicators(period, *, today: dt.date | None = None) -> dict:
                     indicator=ind, country=c, reporting_period=period, reference_label=label, source=src,
                     defaults=dict(value=round(value, 6), ci_low=round(lo, 6), ci_high=round(hi, 6),
                                   sample_size=den_total, reference_start=start, reference_end=end,
-                                  data_status=status, source_url=f"https://bnnasia.org/country/{c.slug}/",
+                                  data_status=status, source_url="https://www.bnnasia.org/methodology/",
                                   published_at=today, collected_at=now, verified_at=now,
                                   verification_status="verified", is_historical=False, notes=notes))
                 summary["written"] += 1

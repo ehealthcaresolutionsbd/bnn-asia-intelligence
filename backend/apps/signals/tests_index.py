@@ -81,29 +81,29 @@ class SeedTests(IndexTestCase):
 
 class SignalIndicatorTests(IndexTestCase):
     def test_rates_and_missing(self):
-        # 21 days × 100 events = 2,100 events; 5 media-repression/day → 50 per 1,000
-        self.feed(self.a, 21, 100, {"media_repression": 5, "censorship": 1, "protests": 8, "protest_repression": 2,
+        # 28 days (4 ISO weeks) × 100 events = 2,800 events; 5 media-repression/day → 50 per 1,000
+        self.feed(self.a, 28, 100, {"media_repression": 5, "censorship": 1, "protests": 8, "protest_repression": 2,
                                     "killings_assaults": lambda i: i % 4})
         self.feed(self.c, 10, 20, {"media_repression": 5})          # 200 events < 300 → missing
         out = build_signal_indicators(self.period, today=TODAY)
         q = IndicatorObservation.objects.filter(source=self.src)
         mr = q.get(country=self.a, indicator__code="bnn_sig_media_repression")
         self.assertAlmostEqual(mr.value, 50.0)
-        self.assertEqual(mr.sample_size, 2100)
+        self.assertEqual(mr.sample_size, 2800)
         self.assertAlmostEqual(q.get(country=self.a, indicator__code="bnn_sig_censorship").value, 10.0)
         self.assertAlmostEqual(q.get(country=self.a, indicator__code="bnn_sig_protest_repression").value, 20.0)
         self.assertAlmostEqual(q.get(country=self.a, indicator__code="bnn_sig_arrests").value, 0.0)   # data → true zero
         viol = q.get(country=self.a, indicator__code="bnn_sig_violence")
-        self.assertAlmostEqual(viol.value, 1000 * sum(i % 4 for i in range(21)) / 2100, places=5)
+        self.assertAlmostEqual(viol.value, 1000 * sum(i % 4 for i in range(28)) / 2800, places=5)
         self.assertLessEqual(viol.ci_low, viol.value)
         self.assertGreaterEqual(viol.ci_high, viol.value)
         self.assertLess(viol.ci_low, viol.ci_high)
         self.assertEqual(mr.data_status, "preliminary")
         self.assertEqual(mr.verification_status, "verified")
         self.assertEqual(mr.reference_start, dt.date(2026, 1, 1))
-        self.assertEqual(mr.reference_end, dt.date(2026, 1, 25))
+        self.assertEqual(mr.reference_end, dt.date(2026, 2, 1))
         self.assertEqual(mr.published_at, TODAY)
-        self.assertTrue(mr.notes.startswith("Machine-computed aggregate of 2100 events from 4200 source articles; method v2"))
+        self.assertTrue(mr.notes.startswith("Machine-computed aggregate of 2800 events from 5600 source articles; method v2"))
         self.assertFalse(q.filter(country=self.c).exists())
         self.assertFalse(q.filter(country=self.b).exists())
         self.assertGreater(out["written"], 0)
@@ -121,9 +121,17 @@ class SignalIndicatorTests(IndexTestCase):
         self.assertFalse(IndicatorObservation.objects.filter(source=self.src, country=self.a).exists())
 
     def test_final_after_period(self):
-        self.feed(self.a, 7, 100, {"censorship": 1})
+        self.feed(self.a, 27, 100, {"censorship": 1}, start=dt.date(2026, 12, 4))   # ends 30 Dec
+        build_signal_indicators(self.period, today=dt.date(2027, 1, 2))
+        self.assertEqual(IndicatorObservation.objects.filter(source=self.src).first().data_status, "preliminary")
+        self.feed(self.a, 1, 100, {"censorship": 1}, start=dt.date(2026, 12, 31))   # 31 Dec ingested → final
         build_signal_indicators(self.period, today=dt.date(2027, 1, 2))
         self.assertEqual(IndicatorObservation.objects.filter(source=self.src).first().data_status, "final")
+
+    def test_too_few_weeks_is_missing(self):
+        self.feed(self.a, 14, 500, {"censorship": 3})            # 7,000 events but only 2 weeks
+        build_signal_indicators(self.period, today=TODAY)
+        self.assertFalse(IndicatorObservation.objects.filter(source=self.src, country=self.a).exists())
 
     def test_bootstrap(self):
         num, den = [3, 0, 9, 1, 4, 12, 2, 0], [400, 380, 520, 300, 410, 600, 350, 390]
@@ -268,7 +276,7 @@ class PipelineAndApiTests(IndexTestCase):
     def setUp(self):
         self.api = APIClient()
         for i, c in enumerate(Country.objects.filter(is_active=True).order_by("iso3")[:6]):
-            self.feed(c, 21, 60 + 10 * i, {"media_repression": i + 1, "censorship": 1, "state_repression": i,
+            self.feed(c, 28, 60 + 10 * i, {"media_repression": i + 1, "censorship": 1, "state_repression": i,
                                            "arrests_detentions": 2, "killings_assaults": lambda d: d % 3 + i,
                                            "protests": 5, "protest_repression": i % 3})
         # Overall needs ≥60 % of the active weight (80): human rights 25 + press freedom 10 + governance 25 = 75 %.
@@ -339,8 +347,8 @@ class PipelineAndApiTests(IndexTestCase):
         codes = {i["code"] for i in m["indicators"]}
         self.assertIn("bnn_sig_violence", codes)
         self.assertNotIn("bnn_sig_protest_repression", codes)          # freedom-democracy hidden
-        self.assertEqual(m["data_volume"]["days_ingested"], 21)
-        self.assertEqual(m["data_volume"]["events_in_countries"], sum(21 * (60 + 10 * i) for i in range(6)))
+        self.assertEqual(m["data_volume"]["days_ingested"], 28)
+        self.assertEqual(m["data_volume"]["events_in_countries"], sum(28 * (60 + 10 * i) for i in range(6)))
         self.assertIsNotNone(m["data_volume"]["last_update"])
 
     def test_csv_404_without_published(self):
