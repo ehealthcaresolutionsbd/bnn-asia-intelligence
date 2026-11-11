@@ -1,0 +1,16 @@
+celery==5.7.0
+Django==5.2.19
+django-environ==0.14.0
+django-filter==26.2
+djangorestframework==3.18.3
+drf-spectacular==0.30.0
+feedparser==6.0.14
+numpy==2.5.3
+pandas==3.0.5
+psycopg[binary]==3.3.8
+python-dateutil==2.9.0.post0
+redis==8.1.0
+requests==2.34.2
+weasyprint==70.0
+gunicorn==23.0.0
+whitenoise==6.12.0

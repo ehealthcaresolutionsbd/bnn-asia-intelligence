@@ -1,0 +1,39 @@
+# Production stack for api.bnnasia.org / research.bnnasia.org. The WordPress site stays on its own host and DB.
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: bnn_intel, POSTGRES_USER: bnn, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+  web:
+    build: ../backend
+    env_file: .env
+    depends_on: [ db, redis ]
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 3 --timeout 60"
+    volumes: [ "static:/app/staticfiles", "media:/app/media" ]
+    restart: unless-stopped
+  worker:
+    build: ../backend
+    env_file: .env
+    depends_on: [ db, redis ]
+    command: celery -A config worker -l info --concurrency 2
+    restart: unless-stopped
+  beat:
+    build: ../backend
+    env_file: .env
+    depends_on: [ db, redis ]
+    command: celery -A config beat -l info
+    restart: unless-stopped
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on: [ web ]
+    ports: [ "80:80", "443:443" ]
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static:/static:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    restart: unless-stopped
+volumes: { pgdata: {}, static: {}, media: {} }

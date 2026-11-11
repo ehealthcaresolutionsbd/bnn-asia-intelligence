@@ -1,0 +1,66 @@
+# Paste into hPanel → VPS → Docker Manager → Compose manually (.yaml editor). Application name: bnn-intel
+# Secrets go in the Environment box (see deploy/.env.example), never in this file.
+x-app: &app
+  image: bnn-intel-app:latest
+  environment: &env
+    DJANGO_ENV: production
+    DJANGO_DEBUG: "0"
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+    DJANGO_ALLOWED_HOSTS: api.bnnasia.org,research.bnnasia.org
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://research.bnnasia.org
+    ADMIN_HOSTS: research.bnnasia.org
+    DATABASE_URL: postgres://bnn:${POSTGRES_PASSWORD}@db:5432/bnn_intel
+    REDIS_URL: redis://redis:6379/1
+    CELERY_BROKER_URL: redis://redis:6379/0
+    CELERY_RESULT_BACKEND: redis://redis:6379/0
+    DJANGO_SUPERUSER_USERNAME: bnnadmin
+    DJANGO_SUPERUSER_EMAIL: admin@bnnasia.org
+    DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+  restart: unless-stopped
+  networks: [ internal ]
+
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: bnn_intel, POSTGRES_USER: bnn, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    restart: unless-stopped
+    networks: [ internal ]
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [ internal ]
+  web:
+    <<: *app
+    build: { context: "https://github.com/creativemoshiur/bnn-asia-intelligence.git#main:backend" }
+    depends_on: [ db, redis ]
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py seed_platform; python manage.py createsuperuser --noinput || true; (python manage.py test_integrations && python manage.py sync_sources) > /tmp/firstsync.log 2>&1 & exec gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 2 --timeout 60"
+    volumes: [ "media:/app/media" ]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=bnn-intel_internal
+      - traefik.http.services.bnnintel.loadbalancer.server.port=8000
+      - traefik.http.routers.bnnapi.rule=Host(`api.bnnasia.org`) && !PathPrefix(`/admin`)
+      - traefik.http.routers.bnnapi.entrypoints=websecure
+      - traefik.http.routers.bnnapi.tls.certresolver=letsencrypt
+      - traefik.http.routers.bnnapi.service=bnnintel
+      - traefik.http.routers.bnnresearch.rule=Host(`research.bnnasia.org`)
+      - traefik.http.routers.bnnresearch.entrypoints=websecure
+      - traefik.http.routers.bnnresearch.tls.certresolver=letsencrypt
+      - traefik.http.routers.bnnresearch.service=bnnintel
+  worker:
+    <<: *app
+    pull_policy: never
+    depends_on: [ db, redis, web ]
+    command: celery -A config worker -l info --concurrency 2
+  beat:
+    <<: *app
+    pull_policy: never
+    depends_on: [ db, redis, web ]
+    command: celery -A config beat -l info -s /tmp/celerybeat-schedule
+
+networks:
+  internal: {}
+volumes:
+  pgdata: {}
+  media: {}

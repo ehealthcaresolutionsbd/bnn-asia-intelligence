@@ -1,0 +1,50 @@
+# Hostinger VPS (srv1542871) – runs NEXT TO the existing n8n stack and reuses its Traefik for HTTPS.
+# TRAEFIK_NETWORK / CERT_RESOLVER / ENTRYPOINT are read from the n8n stack on the server (see README).
+name: bnn-intel
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: bnn_intel, POSTGRES_USER: bnn, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    restart: unless-stopped
+    networks: [ internal ]
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [ internal ]
+  web:
+    build: ../backend
+    env_file: .env
+    depends_on: [ db, redis ]
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 2 --timeout 60"
+    volumes: [ "media:/app/media" ]
+    restart: unless-stopped
+    networks: [ internal, proxy ]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.http.services.bnnintel.loadbalancer.server.port=8000
+      - traefik.http.routers.bnnapi.rule=Host(`api.bnnasia.org`) && !PathPrefix(`/admin`)
+      - traefik.http.routers.bnnapi.entrypoints=${ENTRYPOINT}
+      - traefik.http.routers.bnnapi.tls.certresolver=${CERT_RESOLVER}
+      - traefik.http.routers.bnnresearch.rule=Host(`research.bnnasia.org`)
+      - traefik.http.routers.bnnresearch.entrypoints=${ENTRYPOINT}
+      - traefik.http.routers.bnnresearch.tls.certresolver=${CERT_RESOLVER}
+  worker:
+    build: ../backend
+    env_file: .env
+    depends_on: [ db, redis ]
+    command: celery -A config worker -l info --concurrency 2
+    restart: unless-stopped
+    networks: [ internal ]
+  beat:
+    build: ../backend
+    env_file: .env
+    depends_on: [ db, redis ]
+    command: celery -A config beat -l info
+    restart: unless-stopped
+    networks: [ internal ]
+networks:
+  internal: {}
+  proxy: { external: true, name: "${TRAEFIK_NETWORK}" }
+volumes: { pgdata: {}, media: {} }

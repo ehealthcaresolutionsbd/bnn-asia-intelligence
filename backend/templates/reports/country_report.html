@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>{{ report.title }}</title>
+<style>
+@page { size: A4; margin: 22mm 18mm; @bottom-center { content: "BNN Asia · " counter(page) " / " counter(pages); font: 9pt sans-serif; color: #6B7280; } }
+body { font: 10.5pt/1.55 "DejaVu Sans", sans-serif; color: #1B2029; }
+header { border-bottom: 3px solid #C8102E; padding-bottom: 10px; margin-bottom: 18px; }
+.kicker { color: #C8102E; font-weight: 700; letter-spacing: 2px; font-size: 8pt; text-transform: uppercase; }
+h1 { font-size: 20pt; margin: 4px 0 2px; } h2 { font-size: 13pt; margin: 20px 0 6px; border-left: 3px solid #C8102E; padding-left: 8px; }
+.meta { color: #6B7280; font-size: 9pt; } .text { white-space: pre-line; }
+.cites { font-size: 8.5pt; color: #4B5563; } .cites li { margin-bottom: 2px; word-break: break-all; }
+.draft { color: #C8102E; font-weight: 700; }
+</style></head><body>
+<header><div class="kicker">BNN Asia · Country Intelligence Report</div><h1>{{ report.title }}</h1>
+<div class="meta">Reporting period {{ report.reporting_period.start_date }} – {{ report.reporting_period.end_date }} · Version {{ report.version }}
+{% if report.status != "published" %}<span class="draft"> · DRAFT – NOT FOR PUBLICATION</span>{% endif %}</div></header>
+{% for label, sec in sections %}
+<h2>{{ label }}</h2><div class="text">{{ sec.text }}</div>
+{% if sec.citations and label != "Sources and References" %}<ol class="cites">{% for c in sec.citations %}<li>{{ c.source }} {{ c.url }}</li>{% endfor %}</ol>{% endif %}
+{% endfor %}
+</body></html>
