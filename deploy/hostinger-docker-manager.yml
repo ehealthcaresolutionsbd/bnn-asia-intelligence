@@ -1,7 +1,7 @@
 # Paste into hPanel → VPS → Docker Manager → Compose manually (.yaml editor). Application name: bnn-intel
 # Secrets go in the Environment box (see deploy/.env.example), never in this file.
 x-app: &app
-  image: bnn-intel-app:latest
+  image: ghcr.io/ehealthcaresolutionsbd/bnn-asia-intelligence:latest
   environment: &env
     DJANGO_ENV: production
     DJANGO_DEBUG: "0"
@@ -32,7 +32,6 @@ services:
     networks: [ internal ]
   web:
     <<: *app
-    build: { context: "https://github.com/ehealthcaresolutionsbd/bnn-asia-intelligence.git#main:backend" }
     depends_on: [ db, redis ]
     command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py seed_platform; python manage.py createsuperuser --noinput || true; (python manage.py test_integrations && python manage.py sync_sources) > /tmp/firstsync.log 2>&1 & exec gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 2 --timeout 60"
     volumes: [ "media:/app/media" ]
@@ -50,12 +49,10 @@ services:
       - traefik.http.routers.bnnresearch.service=bnnintel
   worker:
     <<: *app
-    pull_policy: never
     depends_on: [ db, redis, web ]
     command: celery -A config worker -l info --concurrency 2
   beat:
     <<: *app
-    pull_policy: never
     depends_on: [ db, redis, web ]
     command: celery -A config beat -l info -s /tmp/celerybeat-schedule
 
