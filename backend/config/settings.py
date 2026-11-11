@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     "apps.core",
     "apps.catalog",
     "apps.sources",
@@ -105,7 +106,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {"anon": "120/min"},
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
-SPECTACULAR_SETTINGS = {"TITLE": "BNN Asia Intelligence API", "VERSION": "1.0.0"}
+SPECTACULAR_SETTINGS = {"TITLE": "BNN Asia Intelligence API", "VERSION": "1.0.0",
+                        "SWAGGER_UI_DIST": "SIDECAR", "SWAGGER_UI_FAVICON_HREF": "SIDECAR", "REDOC_DIST": "SIDECAR"}
 
 CACHES = {"default": {
     "BACKEND": "django.core.cache.backends.redis.RedisCache",
