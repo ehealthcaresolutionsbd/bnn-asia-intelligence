@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
@@ -120,6 +121,7 @@ CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:
 CELERY_TIMEZONE = "UTC"
 CELERY_BEAT_SCHEDULE = {
     "sync-rss-hourly": {"task": "apps.sources.tasks.sync_due_sources", "schedule": 3600.0},
+    "ingest-gdelt-daily": {"task": "apps.signals.tasks.ingest_yesterday", "schedule": crontab(hour=3, minute=30)},
 }
 
 # Outbound HTTP for collectors
