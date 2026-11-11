@@ -32,7 +32,7 @@ services:
     networks: [ internal ]
   web:
     <<: *app
-    build: { context: "https://github.com/creativemoshiur/bnn-asia-intelligence.git#main:backend" }
+    build: { context: "https://github.com/ehealthcaresolutionsbd/bnn-asia-intelligence.git#main:backend" }
     depends_on: [ db, redis ]
     command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py seed_platform; python manage.py createsuperuser --noinput || true; (python manage.py test_integrations && python manage.py sync_sources) > /tmp/firstsync.log 2>&1 & exec gunicorn config.wsgi:application -b 0.0.0.0:8000 -w 2 --timeout 60"
     volumes: [ "media:/app/media" ]
