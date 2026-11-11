@@ -1,5 +1,5 @@
 """Idempotent bootstrap: regions, countries, 2026 reporting period, categories, indicators,
-incident types, data-source registry, initial methodology (draft) and user groups.
+incident types, data-source registry, methodologies v1.0.0 and v2.0.0 (draft) and user groups.
 Creates NO scores, rankings or observations."""
 import datetime as dt
 
@@ -67,6 +67,10 @@ SOURCES = [
      "manual", {}, 4, "configured", True, "No public RSS found (feed URL 404). Researchers add TIB reports manually."),
     ("BNN Asia – verified incident database", "bnn-incidents", "BNN Asia", "https://bnnasia.org", "original", "manual",
      "", "", {}, 4, "configured", True, "Internal: indicators aggregated from verified incidents."),
+    ("BNN Asia – event data analysis (GDELT)", "bnn-signals", "BNN Asia", "https://bnnasia.org", "original", "dataset",
+     "", "", {}, 4, "configured", True,
+     "Internal: BNN Asia's own statistics computed from the GDELT 2.0 event database (open data, free reuse with "
+     "attribution to the GDELT Project). Machine-coded media events, coverage-corrected, with bootstrap intervals."),
 ]
 
 INDICATORS = [
@@ -95,7 +99,48 @@ INDICATORS = [
     ("wdi_poverty", "economic-social", "Poverty headcount at $3.00/day", "%", "rate", "lower_better", 0, 100, False, False, "wb-wdi", 1),
     ("undp_hdi", "economic-social", "Human Development Index", "0–1", "score", "higher_better", 0, 1, False, True, "undp-hdr", 1),
     ("population", "economic-social", "Population (denominator only)", "people", "count", "higher_better", None, None, False, False, "wb-wdi", 0),
+    # BNN Asia's own event-data statistics (apps.signals.indicators). Weights let them carry a category on their own
+    # (≥50 % of its indicator weight) where international indices or verified incidents are missing.
+    ("bnn_sig_media_repression", "press-freedom", "Coercion/violence against media per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 3),
+    ("bnn_sig_censorship", "press-freedom", "Bans, restrictions & censorship per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 2),
+    ("bnn_sig_state_repression", "human-rights", "State repression of civilians & civil society per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 1.5),
+    ("bnn_sig_arrests", "human-rights", "Arrests & detentions by state actors per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 1),
+    ("bnn_sig_violence", "human-rights", "Killings & physical assaults per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 1.5),
+    ("bnn_sig_protest_repression", "freedom-democracy", "Share of protest events met with repression (BNN event data)", "%", "rate", "lower_better", None, None, False, True, "bnn-signals", 1),
 ]
+
+# Indicators normalised on log(1 + x): event rates are heavily right-skewed (a few conflict countries dominate).
+LOG_TRANSFORM = {"bnn_sig_media_repression", "bnn_sig_censorship", "bnn_sig_state_repression", "bnn_sig_arrests",
+                 "bnn_sig_violence"}
+
+V2_DESCRIPTION = (
+    "BNN Asia's own annual index, computed from big data BNN Asia collects itself. (1) Event data: every daily GDELT 2.0 "
+    "event export is processed; events located in one of 48 Asian countries are classified into public BNN signals "
+    "(CAMEO event code + actor-type rules, listed on this page). (2) Coverage correction: signal counts are divided by "
+    "ALL events recorded in that country in the same period (rate per 1,000 events; protest repression as % of protest "
+    "events), so countries with more media coverage are not penalised for being reported on more. Countries with fewer "
+    "than 300 in-country events get no value (missing, never zero). (3) Uncertainty: a block bootstrap over ISO weeks "
+    "(1,000 resamples, fixed seed) gives a 90% interval for every BNN statistic. (4) Normalisation: indicators are "
+    "min–max scaled to 0–100 on their theoretical scale, or the observed Asian range; skewed event rates are first "
+    "log-transformed (log 1+x); lower-is-better indicators are inverted. (5) Category score = weighted mean of available "
+    "indicators (≥50% of indicator weight required). Overall = weights 25/25/20/15/10/5 (Governance, Human Rights, "
+    "Freedom & Democracy, Rule of Law, Press Freedom, Economic) re-weighted over enabled categories. (6) Missing data: a "
+    "country needs ≥60% of total weight; a missing category is imputed with the LOWER of the country's own mean and the "
+    "Asian median, so missing data can never raise a score. (7) Rank intervals: a Monte Carlo simulation (300 draws, "
+    "fixed seed) redraws every statistic within its interval and recomputes all scores and ranks; the published score "
+    "interval and best–worst rank are the 5th–95th percentiles. (8) Editorial adjustments: BNN editors may override a "
+    "score, exclude a country or attach a note; every adjustment is published with its reason and the computed score. "
+    "Verified international indices and BNN-verified incident records are combined with the event statistics. The index "
+    "is recalculated and republished automatically every week; values are preliminary until the year ends.")
+V2_LIMITATIONS = (
+    "Event data is derived from news media and reflects what is reported, not ground truth: events that are not covered "
+    "by the media are not counted. GDELT is machine-coded and contains classification errors (wrong actor types, "
+    "duplicated stories, misplaced locations); aggregation over a year and rates per 1,000 events reduce but do not "
+    "remove them. State-controlled or censored media environments under-report repression, which can make the most "
+    "closed countries look better than they are; BNN mitigates this by combining event data with international indices "
+    "and verified incidents and by editorial review, but cannot fully correct it. Intervals describe sampling variation "
+    "over weeks, not coding error. Rankings are BNN Asia's own calculation and are not rankings of any source "
+    "organisation.")
 
 INCIDENT_INDICATOR_MAP = {
     "bnn_journalists_killed": ["journalist-killing"],
@@ -150,7 +195,8 @@ class Command(BaseCommand):
         for i, (code, cat, name, unit, vt, direc, lo, hi, pc, scored, src, w) in enumerate(INDICATORS):
             Indicator.objects.update_or_create(code=code, defaults=dict(
                 category=cats[cat], name=name, unit=unit, value_type=vt, direction=direc, scale_min=lo, scale_max=hi,
-                per_capita=pc, used_in_scoring=scored, primary_source=srcs[src], weight_in_category=w, display_order=i))
+                per_capita=pc, used_in_scoring=scored, primary_source=srcs[src], weight_in_category=w, display_order=i,
+                transform="log" if code in LOG_TRANSFORM else "none"))
         m, created = RankingMethodology.objects.get_or_create(
             name="BNN Asia Index", version="1.0.0", reporting_period=ReportingPeriod.objects.get(slug="2026"),
             defaults={"mode": "auto", "min_coverage": 0.6, "description": (
@@ -164,6 +210,12 @@ class Command(BaseCommand):
         if created:
             for slug, w in WEIGHTS_2026.items():
                 MethodologyWeight.objects.create(methodology=m, category=cats[slug], weight=w)
+        m2, created = RankingMethodology.objects.get_or_create(
+            name="BNN Asia Index", version="2.0.0", reporting_period=ReportingPeriod.objects.get(slug="2026"),
+            defaults={"mode": "auto", "min_coverage": 0.6, "description": V2_DESCRIPTION, "limitations": V2_LIMITATIONS})
+        if created:
+            for slug, w in WEIGHTS_2026.items():
+                MethodologyWeight.objects.create(methodology=m2, category=cats[slug], weight=w)
         self._groups()
         self.stdout.write(self.style.SUCCESS(
             f"Seeded {Country.objects.count()} countries, {IntelligenceCategory.objects.count()} categories, "

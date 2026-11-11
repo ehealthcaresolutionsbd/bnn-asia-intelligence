@@ -34,6 +34,9 @@ class IndicatorObservation(TimeStamped):
     verification_status = models.CharField(max_length=10, choices=VERIFY, default="pending")
     verified_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL)
     notes = models.TextField(blank=True)
+    ci_low = models.FloatField(null=True, blank=True, help_text="Lower bound of the 90% uncertainty interval (computed statistics only).")
+    ci_high = models.FloatField(null=True, blank=True, help_text="Upper bound of the 90% uncertainty interval.")
+    sample_size = models.PositiveIntegerField(null=True, blank=True, help_text="Number of events/records the value is computed from.")
 
     class Meta:
         ordering = ["indicator", "country", "-reference_end"]

@@ -122,6 +122,8 @@ CELERY_TIMEZONE = "UTC"
 CELERY_BEAT_SCHEDULE = {
     "sync-rss-hourly": {"task": "apps.sources.tasks.sync_due_sources", "schedule": 3600.0},
     "ingest-gdelt-daily": {"task": "apps.signals.tasks.ingest_yesterday", "schedule": crontab(hour=3, minute=30)},
+    "refresh-index-weekly": {"task": "apps.signals.tasks_index.refresh_index_task",
+                             "schedule": crontab(hour=4, minute=0, day_of_week=1)},
 }
 
 # Outbound HTTP for collectors

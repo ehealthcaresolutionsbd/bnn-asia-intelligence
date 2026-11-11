@@ -106,6 +106,8 @@ class Indicator(TimeStamped):
     scale_min = models.FloatField(null=True, blank=True, help_text="Theoretical minimum used for normalisation (blank = use observed min).")
     scale_max = models.FloatField(null=True, blank=True, help_text="Theoretical maximum used for normalisation (blank = use observed max).")
     per_capita = models.BooleanField(default=False, help_text="Divide by population (per million) before normalising counts.")
+    TRANSFORM = [("none", "None"), ("log", "log(1 + x) before normalisation (skewed rates)")]
+    transform = models.CharField(max_length=4, choices=TRANSFORM, default="none")
     weight_in_category = models.FloatField(default=1.0)
     primary_source = models.ForeignKey("sources.DataSource", null=True, blank=True, on_delete=models.SET_NULL, related_name="indicators")
     is_active = models.BooleanField(default=True)

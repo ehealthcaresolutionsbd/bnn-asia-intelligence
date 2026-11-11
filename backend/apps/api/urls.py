@@ -12,6 +12,8 @@ router.register("incidents", views.IncidentViewSet, basename="incident")
 urlpatterns = [
     path("", include(router.urls)),
     path("ranking/", views.ranking, name="ranking"),
+    path("ranking.csv", views.ranking_csv, name="ranking-csv"),
+    path("methodology/", views.methodology, name="methodology"),
     path("official-rankings/", views.official_rankings, name="official-rankings"),
     path("compare/", views.compare, name="compare"),
     path("config/", views.site_config, name="config"),

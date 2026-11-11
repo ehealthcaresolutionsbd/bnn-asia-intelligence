@@ -51,7 +51,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         model = IndicatorObservation
         fields = ["indicator", "indicator_name", "category", "unit", "value", "reference_label", "reference_start",
                   "reference_end", "data_status", "is_historical", "published_rank", "published_rank_of", "source",
-                  "source_url", "published_at", "collected_at", "verified_at"]
+                  "source_url", "published_at", "collected_at", "verified_at", "ci_low", "ci_high", "sample_size"]
 
 
 class IncidentSerializer(serializers.ModelSerializer):
@@ -75,11 +75,29 @@ class ScoreSerializer(serializers.ModelSerializer):
     country = CountrySerializer()
     category = serializers.CharField(source="category.slug", default=None)
     position_change = serializers.IntegerField(read_only=True)
+    score_ci = serializers.SerializerMethodField()
+    rank_interval = serializers.SerializerMethodField()
+    editorial = serializers.SerializerMethodField()
 
     class Meta:
         model = CountryScore
         fields = ["country", "category", "score", "rank", "previous_rank", "position_change", "coverage", "confidence",
-                  "is_ranked", "status_label", "imputed_categories"]
+                  "is_ranked", "status_label", "imputed_categories", "score_ci", "rank_interval", "editorial"]
+
+    def get_score_ci(self, obj):
+        return (obj.detail or {}).get("score_ci")
+
+    def get_rank_interval(self, obj):
+        return (obj.detail or {}).get("rank_interval")
+
+    def get_editorial(self, obj):
+        return (obj.detail or {}).get("editorial", [])
+
+
+class MethodologyIndicatorSerializer(IndicatorSerializer):
+    class Meta(IndicatorSerializer.Meta):
+        fields = IndicatorSerializer.Meta.fields + ["description", "scale_min", "scale_max", "per_capita",
+                                                    "transform", "weight_in_category"]
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
@@ -100,11 +118,16 @@ class SnapshotSerializer(serializers.ModelSerializer):
 class ReportSerializer(serializers.ModelSerializer):
     country = serializers.CharField(source="country.slug")
     pdf_url = serializers.SerializerMethodField()
+    html_url = serializers.SerializerMethodField()
 
     class Meta:
         model = CountryReport
-        fields = ["id", "title", "country", "version", "published_at", "pdf_url"]
+        fields = ["id", "title", "country", "version", "published_at", "pdf_url", "html_url"]
 
     def get_pdf_url(self, r):
         req = self.context.get("request")
         return req.build_absolute_uri(f"/reports/{r.pk}.pdf") if req else f"/reports/{r.pk}.pdf"
+
+    def get_html_url(self, r):
+        req = self.context.get("request")
+        return req.build_absolute_uri(f"/reports/{r.pk}/") if req else f"/reports/{r.pk}/"

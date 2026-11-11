@@ -1,5 +1,8 @@
 """Public, read-only API. Only *published / verified / visible* data is ever returned."""
-from django.db.models import Q
+import csv
+
+from django.db.models import Count, Max, Min, Q, Sum
+from django.http import Http404, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -177,6 +180,112 @@ def site_config(request):
                      "periods": s.PeriodSerializer(ReportingPeriod.objects.exclude(status="draft"), many=True).data,
                      "categories": s.CategorySerializer(visible_categories(), many=True).data,
                      "has_published_ranking": RankingSnapshot.objects.filter(reporting_period=period, status="published").exists()})
+
+
+def _published_snapshot(period):
+    return (RankingSnapshot.objects.filter(reporting_period=period, status="published")
+            .select_related("methodology").order_by("-published_at").first())
+
+
+class _Echo:
+    def write(self, value):
+        return value
+
+
+CSV_COLUMNS = ["period", "methodology_version", "snapshot_id", "published_at", "category", "rank", "country", "iso3",
+               "region", "score", "score_ci_low", "score_ci_high", "rank_best", "rank_worst", "previous_rank",
+               "coverage", "confidence", "is_ranked", "status_label", "imputed_categories", "editorial"]
+
+
+@api_view(["GET"])
+def ranking_csv(request):
+    """Open-data download of the published BNN Asia Index as CSV. ?category=slug, ?period=slug."""
+    period = period_from(request)
+    snap = _published_snapshot(period)
+    if not snap:
+        raise Http404("No published ranking yet for this period.")
+    cat = request.query_params.get("category")
+    qs = CountryScore.objects.filter(snapshot=snap).select_related("country__region", "category")
+    if cat:
+        c = get_object_or_404(visible_categories(), slug=cat)
+        if not c.ranked:
+            raise Http404(f"{c.name} is currently excluded from ranking.")
+        qs = qs.filter(category=c)
+    else:
+        qs = qs.filter(category__isnull=True)
+    rows = sorted(qs, key=lambda x: (not x.is_ranked, x.rank or 10**6, x.country.name))
+    slug_of = {c.id: c.slug for c in IntelligenceCategory.objects.all()}
+
+    def gen():
+        w = csv.writer(_Echo())
+        yield w.writerow(CSV_COLUMNS)
+        for r in rows:
+            d = r.detail or {}
+            ci = d.get("score_ci") or [None, None]
+            ri = d.get("rank_interval") or [None, None]
+            ed = "; ".join(f"{e.get('kind')}: {e.get('reason')}" for e in d.get("editorial", []))
+            yield w.writerow([period.slug, snap.methodology.version, snap.pk,
+                              snap.published_at.isoformat() if snap.published_at else "",
+                              r.category.slug if r.category else "overall", r.rank or "", r.country.name,
+                              r.country.iso3, r.country.region.name, "" if r.score is None else r.score,
+                              "" if ci[0] is None else ci[0], "" if ci[1] is None else ci[1],
+                              "" if ri[0] is None else ri[0], "" if ri[1] is None else ri[1], r.previous_rank or "",
+                              r.coverage, r.confidence, int(r.is_ranked), r.status_label,
+                              ",".join(slug_of.get(i, str(i)) for i in r.imputed_categories), ed])
+
+    name = f"bnn-asia-index-{period.slug}{'-' + cat if cat else ''}.csv"
+    resp = StreamingHttpResponse(gen(), content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="{name}"'
+    return resp
+
+
+@api_view(["GET"])
+def methodology(request):
+    """Current published methodology, public signal rules, indicator list and data-volume statistics."""
+    from apps.rankings.models import RankingMethodology
+    from apps.signals.models import CountryVolumeDaily, IngestedDay, SignalDaily
+    from apps.signals.rules import SIGNALS
+
+    period = period_from(request)
+    snap = _published_snapshot(period)
+    m = snap.methodology if snap else (RankingMethodology.objects.filter(reporting_period=period, is_published=True)
+                                       .order_by("-published_at").first())
+    meth = None
+    if m:
+        meth = {"name": m.name, "version": m.version, "mode": m.mode, "min_coverage": m.min_coverage,
+                "min_category_coverage": m.min_category_coverage, "description": m.description,
+                "limitations": m.limitations, "published_at": m.published_at,
+                "weights": [{"category": w.category.slug, "name": w.category.name, "weight": w.weight,
+                             "ranked": w.category.ranked} for w in m.weights.select_related("category")]}
+        if snap:
+            slugs = dict(IntelligenceCategory.objects.values_list("id", "slug"))
+            meth["effective_weights"] = {slugs.get(int(k), k): v for k, v in snap.effective_weights.items()}
+    visible = set(visible_categories().values_list("slug", flat=True))
+    rules = [{"key": k, "label": lab, "category": cat, "category_visible": cat in visible, "cameo_prefixes": list(codes),
+              "target_types": sorted(t) if t else None, "perpetrator_types": sorted(p) if p else None}
+             for k, (lab, cat, codes, t, p) in SIGNALS.items()]
+    inds = Indicator.objects.filter(is_active=True, category__in=visible_categories()).select_related(
+        "category", "primary_source")
+    days = IngestedDay.objects.filter(status="ok", day__gte=period.start_date, day__lte=period.end_date)
+    dstats = days.aggregate(n=Count("id"), rows=Sum("rows_total"), asia=Sum("rows_asia"), first=Min("day"),
+                            last=Max("day"), updated=Max("processed_at"))
+    vol = CountryVolumeDaily.objects.filter(day__gte=period.start_date, day__lte=period.end_date).aggregate(
+        events=Sum("events"), articles=Sum("articles"), countries=Count("country", distinct=True))
+    sig = dict(SignalDaily.objects.filter(day__gte=period.start_date, day__lte=period.end_date)
+               .values_list("signal").annotate(n=Sum("events")))
+    return Response({
+        "period": period.slug,
+        "methodology": meth,
+        "signals": rules,
+        "indicators": s.MethodologyIndicatorSerializer(inds, many=True).data,
+        "data_volume": {"days_ingested": dstats["n"] or 0, "first_day": dstats["first"], "last_day": dstats["last"],
+                        "gdelt_rows_processed": dstats["rows"] or 0, "asia_rows": dstats["asia"] or 0,
+                        "events_in_countries": vol["events"] or 0, "source_articles": vol["articles"] or 0,
+                        "countries_with_data": vol["countries"] or 0,
+                        "signal_events": {k: sig.get(k, 0) for k in SIGNALS},
+                        "last_update": dstats["updated"]},
+        "snapshot": s.SnapshotSerializer(snap).data if snap else None,
+    })
 
 
 @api_view(["GET"])
