@@ -1,0 +1,73 @@
+{% comment %}Shared report body for the PDF (mode=pdf) and the public HTML page (mode=web).{% endcomment %}
+<section class="cover">
+  <div class="cover-bar"></div>
+  <div class="brand"><span class="brand-bnn">BNN</span><span class="brand-asia">ASIA</span></div>
+  <div class="cover-kicker">Country Intelligence &amp; Asia Ranking Platform</div>
+  <div class="cover-type">Annual Country Report</div>
+  <h1 class="cover-country">{{ report.country.name }}</h1>
+  <div class="cover-period">{{ report.reporting_period.name }} · {{ report.reporting_period.start_date|date:"j F Y" }} – {{ report.reporting_period.end_date|date:"j F Y" }}</div>
+  {% if report.status == "draft" or report.status == "review" %}<div class="draft-banner">DRAFT – NOT FOR PUBLICATION</div>{% endif %}
+  {% if report.status == "superseded" %}<div class="superseded-banner">Superseded – a newer version of this report exists</div>{% endif %}
+  <dl class="cover-meta">
+    <div><dt>Version</dt><dd>{{ report.version }}</dd></div>
+    <div><dt>Generated</dt><dd>{{ generated_at|date:"j F Y" }}</dd></div>
+    {% if report.published_at %}<div><dt>Published</dt><dd>{{ report.published_at|date:"j F Y" }}</dd></div>{% endif %}
+    <div><dt>Basis</dt><dd>Data-driven report – methodology v{{ methodology_version|default:"n/a" }}</dd></div>
+  </dl>
+  {% if mode == "pdf" %}
+  <nav class="toc"><div class="toc-title">Contents</div><ol>
+    {% for key, sec in sections %}<li><a href="#sec-{{ key }}">{{ sec.title }}</a></li>{% endfor %}
+  </ol></nav>
+  {% endif %}
+  <p class="cover-note">Independent, data-driven assessment by BNN Asia. Every figure is drawn from the BNN Asia database
+    and cited to its source record. Event-data statistics describe reported patterns and do not establish causes.</p>
+</section>
+
+{% if mode == "web" %}
+<nav class="toc toc-web"><div class="toc-title">Contents</div><ol>
+  {% for key, sec in sections %}<li><a href="#sec-{{ key }}">{{ sec.title }}</a></li>{% endfor %}
+</ol>
+<div class="downloads"><a href="{{ pdf_url }}">Download PDF</a></div></nav>
+{% endif %}
+
+<main class="report">
+{% for key, sec in sections %}
+  <section id="sec-{{ key }}" class="sec sec-{{ sec.kind|default:key }}{% if sec.kind == 'methodology' or sec.kind == 'sources' %} appendix{% endif %}">
+    <h2>{% if sec.kind == 'methodology' %}Appendix A · {% elif sec.kind == 'sources' %}Appendix B · {% endif %}{{ sec.title }}</h2>
+
+    {% if sec.kind == "findings" %}
+      <div class="findings-box"><ul>{% for p in sec.paragraphs %}<li>{{ p }}</li>{% empty %}<li>No findings.</li>{% endfor %}</ul></div>
+    {% elif sec.kind != "sources" %}
+      {% for p in sec.paragraphs %}<p>{{ p }}</p>{% endfor %}
+    {% endif %}
+
+    {% if sec.kind == "category" and sec.indicators %}
+      <table class="data"><thead><tr><th>Indicator</th><th class="num">Value</th><th>Reference</th><th>Status</th><th>CI</th><th>Source</th></tr></thead>
+      <tbody>{% for i in sec.indicators %}<tr>
+        <td>{{ i.name }}{% if i.historical %} <span class="tag">historical</span>{% endif %}</td>
+        <td class="num">{{ i.value }}{% if i.unit %} <span class="unit">{{ i.unit }}</span>{% endif %}{% if i.published_rank %}<br><span class="unit">rank {{ i.published_rank }}</span>{% endif %}</td>
+        <td>{{ i.reference }}</td><td>{{ i.status }}</td><td>{{ i.ci|default:"–" }}</td>
+        <td>{{ i.source }} <sup>[{{ i.n }}]</sup></td></tr>{% endfor %}</tbody></table>
+    {% endif %}
+
+    {% if sec.kind == "events" and sec.signal_rows %}
+      <table class="data"><thead><tr><th>Signal</th><th class="num">Events</th><th class="num">Rate / 1,000</th><th class="num">Asian median</th><th class="num">Ratio</th><th class="num">z</th><th class="num">2nd vs 1st half</th></tr></thead>
+      <tbody>{% for s in sec.signal_rows %}<tr><td>{{ s.label }}</td><td class="num">{{ s.events_fmt }}</td><td class="num">{{ s.rate|floatformat:2 }}</td>
+        <td class="num">{{ s.median_rate|floatformat:2|default:"–" }}</td><td class="num">{% if s.ratio is not None %}{{ s.ratio|floatformat:1 }}×{% else %}–{% endif %}</td>
+        <td class="num">{% if s.z is not None %}{% if s.z > 0 %}+{% endif %}{{ s.z|floatformat:1 }}{% else %}–{% endif %}</td>
+        <td class="num">{% if s.half_change is not None %}{% if s.half_change > 0 %}+{% endif %}{{ s.half_change }}%{% else %}–{% endif %}</td></tr>{% endfor %}</tbody></table>
+    {% endif %}
+
+    {% for ch in sec.charts %}
+      <figure class="chart"><img src="{{ ch.src }}" alt="{{ ch.alt }}"><figcaption>Figure: {{ ch.title }}. Source: BNN Asia database.</figcaption></figure>
+    {% endfor %}
+
+    {% if sec.citations %}
+      <ol class="cites{% if sec.kind == 'sources' %} cites-all{% endif %}">{% for c in sec.citations %}
+        <li>{{ c.source|default:c.type }}{% if c.from %} ({{ c.from }} – {{ c.to }}){% endif %}{% if c.url %} – {% if mode == "web" %}<a href="{{ c.url }}" rel="nofollow noopener">{{ c.url }}</a>{% else %}<span class="url">{{ c.url }}</span>{% endif %}{% endif %}{% if c.type == "observation" %} <span class="rec">[obs. #{{ c.id }}]</span>{% elif c.type == "incident" %} <span class="rec">[incident #{{ c.id }}]</span>{% elif c.type == "country_score" %} <span class="rec">[score #{{ c.id }}]</span>{% endif %}</li>
+      {% endfor %}</ol>
+    {% endif %}
+  </section>
+{% endfor %}
+</main>
+<footer class="report-footer">© BNN Asia · {{ report.title }} · version {{ report.version }}{% if report.editor %} · edited by BNN Asia editors{% endif %}</footer>

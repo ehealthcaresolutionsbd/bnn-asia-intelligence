@@ -1,20 +1,47 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>{{ report.title }}</title>
+<html lang="en"><head><meta charset="utf-8"><title>{{ report.title }}</title>
 <style>
-@page { size: A4; margin: 22mm 18mm; @bottom-center { content: "BNN Asia · " counter(page) " / " counter(pages); font: 9pt sans-serif; color: #6B7280; } }
-body { font: 10.5pt/1.55 "DejaVu Sans", sans-serif; color: #1B2029; }
-header { border-bottom: 3px solid #C8102E; padding-bottom: 10px; margin-bottom: 18px; }
-.kicker { color: #C8102E; font-weight: 700; letter-spacing: 2px; font-size: 8pt; text-transform: uppercase; }
-h1 { font-size: 20pt; margin: 4px 0 2px; } h2 { font-size: 13pt; margin: 20px 0 6px; border-left: 3px solid #C8102E; padding-left: 8px; }
-.meta { color: #6B7280; font-size: 9pt; } .text { white-space: pre-line; }
-.cites { font-size: 8.5pt; color: #4B5563; } .cites li { margin-bottom: 2px; word-break: break-all; }
-.draft { color: #C8102E; font-weight: 700; }
+@page { size: A4; margin: 20mm 17mm 20mm 17mm;
+  @top-left { content: "BNN ASIA · {{ report.country.name }} · {{ report.reporting_period.name }}"; font: 7.5pt "Manrope", "DejaVu Sans", sans-serif; color: #6B7280; letter-spacing: .5pt; }
+  @top-right { content: "{% if report.status == 'draft' or report.status == 'review' %}DRAFT – {% endif %}v{{ report.version }}"; font: 7.5pt "Manrope", "DejaVu Sans", sans-serif; color: #C8102E; }
+  @bottom-center { content: counter(page) " / " counter(pages); font: 8pt "Manrope", "DejaVu Sans", sans-serif; color: #6B7280; } }
+@page :first { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-center { content: none; } }
+* { box-sizing: border-box; }
+body { font: 9.6pt/1.5 "Manrope", "DejaVu Sans", sans-serif; color: #0E1116; margin: 0; }
+.cover { height: 297mm; padding: 34mm 22mm 20mm; position: relative; page-break-after: always; break-after: page; }
+.cover-bar { position: absolute; top: 0; left: 0; right: 0; height: 9mm; background: #C8102E; }
+.brand { font-weight: 800; font-size: 22pt; letter-spacing: 1.5pt; }
+.brand-bnn { color: #0E1116; } .brand-asia { color: #C8102E; margin-left: 4pt; }
+.cover-kicker { color: #6B7280; font-size: 8.5pt; letter-spacing: 1.2pt; text-transform: uppercase; margin-top: 2pt; }
+.cover-type { margin-top: 40mm; color: #C8102E; font-weight: 700; letter-spacing: 2pt; text-transform: uppercase; font-size: 10pt; }
+.cover-country { font-size: 38pt; line-height: 1.05; margin: 4mm 0 3mm; font-weight: 800; color: #0E1116; border: 0; padding: 0; }
+.cover-period { font-size: 12pt; color: #0E1116; }
+.cover-meta { display: flex; flex-wrap: wrap; gap: 0; margin: 12mm 0 0; border-top: 1.5pt solid #0E1116; padding-top: 4mm; }
+.cover-meta div { width: 50%; margin-bottom: 3mm; } .cover-meta dt { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 1pt; color: #6B7280; }
+.cover-meta dd { margin: 0; font-weight: 600; }
+.toc { margin-top: 8mm; } .toc-title { font-weight: 700; font-size: 8pt; letter-spacing: 1pt; text-transform: uppercase; color: #6B7280; margin-bottom: 2mm; }
+.toc ol { margin: 0; padding-left: 5mm; columns: 2; column-gap: 10mm; font-size: 9pt; }
+.toc a { color: #0E1116; text-decoration: none; } .toc a::after { content: " · " target-counter(attr(href), page); color: #6B7280; }
+.cover-note { position: absolute; bottom: 18mm; left: 22mm; right: 22mm; font-size: 8pt; color: #6B7280; border-left: 2pt solid #C8102E; padding-left: 3mm; }
+.draft-banner, .superseded-banner { display: inline-block; margin-top: 6mm; padding: 2mm 4mm; font-weight: 800; letter-spacing: 1pt; }
+.draft-banner { background: #C8102E; color: #fff; } .superseded-banner { border: 1pt solid #6B7280; color: #6B7280; }
+h2 { font-size: 13.5pt; margin: 0 0 3mm; padding: 0 0 1.5mm; border-bottom: 1.2pt solid #0E1116; color: #0E1116; }
+h2::before { content: ""; display: inline-block; width: 3.5mm; height: 3.5mm; background: #C8102E; margin-right: 2.5mm; vertical-align: 0; }
+.sec { margin-bottom: 8mm; } .sec p { margin: 0 0 2.2mm; }
+.sec-executive_summary p:first-of-type { font-size: 10.5pt; }
+.findings-box { background: #FBF1F2; border-left: 3pt solid #C8102E; padding: 3mm 4mm; break-inside: avoid; }
+.findings-box ul { margin: 0; padding-left: 4mm; } .findings-box li { margin-bottom: 1.6mm; }
+table.data { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; font-size: 8.2pt; break-inside: auto; }
+table.data th { text-align: left; font-weight: 700; color: #6B7280; text-transform: uppercase; font-size: 6.8pt; letter-spacing: .4pt; border-bottom: 1pt solid #0E1116; padding: 1.2mm 1.5mm; }
+table.data td { border-bottom: .5pt solid #E5E7EB; padding: 1.2mm 1.5mm; vertical-align: top; } table.data tr { break-inside: avoid; }
+.num { text-align: right; white-space: nowrap; } .unit { color: #6B7280; font-size: 7pt; } .tag { color: #C8102E; font-size: 6.8pt; text-transform: uppercase; }
+sup { color: #C8102E; font-size: 6.5pt; }
+.chart { margin: 3mm 0 4mm; break-inside: avoid; } .chart img { width: 100%; } .chart figcaption { font-size: 7.5pt; color: #6B7280; margin-top: 1mm; }
+.cites { font-size: 7.4pt; color: #4B5563; margin: 2mm 0 0; padding-left: 5mm; border-top: .5pt solid #E5E7EB; padding-top: 1.5mm; }
+.cites li { margin-bottom: .8mm; } .url { word-break: break-all; color: #0E1116; } .rec { color: #9CA3AF; }
+.appendix { break-before: page; } .sec-methodology p { font-size: 8.8pt; } .appendix + .appendix { break-before: auto; }
+.cites-all { border-top: 0; font-size: 7.6pt; }
+.report-footer { font-size: 7pt; color: #6B7280; margin-top: 6mm; border-top: .5pt solid #E5E7EB; padding-top: 2mm; }
 </style></head><body>
-<header><div class="kicker">BNN Asia · Country Intelligence Report</div><h1>{{ report.title }}</h1>
-<div class="meta">Reporting period {{ report.reporting_period.start_date }} – {{ report.reporting_period.end_date }} · Version {{ report.version }}
-{% if report.status != "published" %}<span class="draft"> · DRAFT – NOT FOR PUBLICATION</span>{% endif %}</div></header>
-{% for label, sec in sections %}
-<h2>{{ label }}</h2><div class="text">{{ sec.text }}</div>
-{% if sec.citations and label != "Sources and References" %}<ol class="cites">{% for c in sec.citations %}<li>{{ c.source }} {{ c.url }}</li>{% endfor %}</ol>{% endif %}
-{% endfor %}
+{% include "reports/_report_body.html" %}
 </body></html>
