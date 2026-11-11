@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.incidents",
     "apps.rankings",
     "apps.reports",
+    "apps.signals",
     "apps.api",
 ]
 
