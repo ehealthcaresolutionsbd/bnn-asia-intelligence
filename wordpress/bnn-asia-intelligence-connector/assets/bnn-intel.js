@@ -281,24 +281,27 @@
   function methodology(root) {
     api('methodology/').then(function (d) {
       var m = d.methodology || {}, w = m.weights || [], vol = d.data_volume || {};
+      var names = {}; w.forEach(function (x) { names[x.category] = x.name; });
+      function catName(slug) { return names[slug] || String(slug || '').replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
       root.innerHTML =
         '<div class="bnn-i-counts">' +
-        '<div><b>' + fmt(vol.events_processed, 0) + '</b><span>events analysed (' + esc(d.period || '') + ')</span></div>' +
+        '<div><b>' + fmt(vol.events_in_countries, 0) + '</b><span>news events analysed (' + esc(d.period || '') + ')</span></div>' +
+        '<div><b>' + fmt(vol.source_articles, 0) + '</b><span>source articles</span></div>' +
         '<div><b>' + fmt(vol.days_ingested, 0) + '</b><span>days of data processed</span></div>' +
         '<div><b>' + fmt((d.indicators || []).length, 0) + '</b><span>indicators</span></div>' +
         '<div><b>' + esc(m.version || '–') + '</b><span>methodology version</span></div></div>' +
         (vol.last_update ? '<p class="bnn-i-meta">' + freshness(vol.last_update) + '</p>' : '') +
-        '<h2 class="bnn-i-h2">How the index is built</h2><div class="bnn-i-card"><p>' + esc(m.description || '') + '</p></div>' +
+        '<h2 class="bnn-i-h2">How the index is built</h2><div class="bnn-i-card"><p>' + esc(m.description || 'BNN Asia reads the GDELT global news-event record every day, keeps events located in 48 Asian countries, and counts specific kinds of events (for example coercion against journalists, arrests, protest repression) per 1,000 in-country events, so that countries with more news coverage are not penalised. These rates are combined with official statistics, normalised across Asia and weighted by category. Every value carries a 90% uncertainty range and every editorial change is published. The 2026 index is being calculated and will appear here once published.') + '</p></div>' +
         '<h2 class="bnn-i-h2">Category weights</h2><div class="bnn-i-card">' + w.map(function (x) {
-          return '<div class="bnn-i-wrow"><span>' + esc(x.category || x.name) + (x.active === false ? ' <em class="bnn-i-muted">(currently disabled – weight redistributed)</em>' : '') + '</span>' + bar(x.weight) + '<b>' + fmt(x.weight, 0) + '%</b></div>';
+          return '<div class="bnn-i-wrow"><span>' + esc(x.name || x.category) + (x.ranked === false ? ' <em class="bnn-i-muted">(currently disabled – weight redistributed)</em>' : '') + '</span>' + bar(x.weight) + '<b>' + fmt(x.weight, 0) + '%</b></div>';
         }).join('') + '</div>' +
         '<h2 class="bnn-i-h2">What we count</h2><div class="bnn-i-scroll"><table class="bnn-i-table compact"><thead><tr><th>Signal</th><th>Category</th><th>Event codes (CAMEO)</th><th>Targets</th><th>Perpetrators</th></tr></thead><tbody>' +
-        (d.signals || []).map(function (s) {
-          return '<tr><td>' + esc(s.label) + '</td><td>' + esc(s.category) + '</td><td>' + esc((s.cameo || []).join(', ')) + '</td><td>' + esc((s.targets || []).join(', ') || 'any') + '</td><td>' + esc((s.perpetrators || []).join(', ') || 'any') + '</td></tr>';
+        (d.signals || []).filter(function (s) { return s.category_visible !== false; }).map(function (s) {
+          return '<tr><td>' + esc(s.label) + '</td><td>' + esc(catName(s.category)) + '</td><td>' + esc((s.cameo_prefixes || []).join(', ')) + '</td><td>' + esc((s.target_types || []).join(', ') || 'any') + '</td><td>' + esc((s.perpetrator_types || []).join(', ') || 'any') + '</td></tr>';
         }).join('') + '</tbody></table></div>' +
         '<h2 class="bnn-i-h2">Indicators</h2><div class="bnn-i-scroll"><table class="bnn-i-table compact"><thead><tr><th>Indicator</th><th>Category</th><th>Direction</th><th>Source</th></tr></thead><tbody>' +
         (d.indicators || []).map(function (i) {
-          return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.category) + '</td><td>' + (i.direction === 'lower_better' ? 'lower is better' : 'higher is better') + '</td><td>' + esc(i.source) + '</td></tr>';
+          return '<tr><td>' + esc(i.name) + '</td><td>' + esc(catName(i.category)) + '</td><td>' + (i.direction === 'lower_better' ? 'lower is better' : 'higher is better') + '</td><td>' + esc(i.source) + '</td></tr>';
         }).join('') + '</tbody></table></div>' +
         '<h2 class="bnn-i-h2">Limitations</h2><div class="bnn-i-card"><p>' + esc(m.limitations || '') + '</p></div>' +
         '<p class="bnn-i-note"><a class="bnn-i-dl" href="' + esc((CFG.apiPublic || '') + 'ranking.csv') + '">⬇ Download the full ranking (CSV)</a> · <a href="' + esc((CFG.apiPublic || '').replace(/v1\/?$/, '') + 'docs/') + '">Open API documentation</a></p>';
