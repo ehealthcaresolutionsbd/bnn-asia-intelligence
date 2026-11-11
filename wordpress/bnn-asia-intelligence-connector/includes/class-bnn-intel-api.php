@@ -19,6 +19,7 @@ class BNN_Intel_API {
 		'#^ranking/$#',
 		'#^official-rankings/$#',
 		'#^compare/$#',
+		'#^methodology/$#',
 	);
 
 	/** Allowed query parameters (anything else is dropped). */

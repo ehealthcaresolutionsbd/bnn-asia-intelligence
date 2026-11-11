@@ -27,6 +27,19 @@
     return String(s || '').replace(/^GOV_WGI_\w+\.EST /, 'WGI ').replace(/^WEO \w+ /, 'IMF WEO ')
       .replace(/^(SP|NY|SI)\.[\w.]+ /, 'World Bank ').replace(/^HDI /, 'UNDP HDI ').replace(/^BNN /, 'BNN verified ');
   }
+  function ci(r) {
+    var c = r && r.score_ci;
+    return (c && c.length === 2 && c[0] != null) ? '<small class="bnn-i-ci" title="90% uncertainty range">' + fmt(c[0], 1) + '–' + fmt(c[1], 1) + '</small>' : '';
+  }
+  function rankRange(r) {
+    var ri = r && r.rank_interval;
+    return (ri && ri.length === 2 && ri[0] != null && ri[0] !== ri[1]) ? '<small class="bnn-i-ci" title="Plausible rank range given data uncertainty">range ' + ri[0] + '–' + ri[1] + '</small>' : '';
+  }
+  function editorial(r) {
+    var e = r && r.editorial;
+    if (!e || !e.length) return '';
+    return e.map(function (x) { return '<span class="bnn-i-badge bnn-i-ed" title="' + esc(x.reason) + '">editor ' + esc(x.kind) + '</span>'; }).join(' ');
+  }
   function countryUrl(slug) { return CFG.countryBase + slug + '/'; }
   function badge(conf) { return '<span class="bnn-i-badge bnn-i-c-' + esc(conf) + '">' + esc(conf) + ' confidence</span>'; }
   function change(n) {
@@ -59,7 +72,7 @@
         '<select aria-label="Region"><option value="">All regions</option>' + Object.keys(regions).sort().map(function (r) { return '<option>' + esc(r) + '</option>'; }).join('') + '</select></div></div>' +
         '<div class="bnn-i-scroll"><table class="bnn-i-table"><thead><tr>' +
         '<th data-k="rank">Rank</th><th data-k="name">Country</th><th data-k="score">Score</th><th data-k="chg">Change</th><th data-k="cov">Data coverage</th><th>Confidence</th></tr></thead><tbody></tbody></table></div>' +
-        '<p class="bnn-i-note">' + esc(m.limitations || '') + ' Countries without enough verified data are shown as “Not Ranked – Insufficient Data”; missing data is never counted as zero.</p>';
+        '<p class="bnn-i-note"><a class="bnn-i-dl" href="' + esc((CFG.apiPublic || '') + 'ranking.csv' + (root.dataset.category ? '?category=' + encodeURIComponent(root.dataset.category) : '')) + '">⬇ Download this ranking (CSV, open data)</a> · <a href="/methodology/">How it is calculated</a></p><p class="bnn-i-note">' + esc(m.limitations || '') + ' Countries without enough verified data are shown as “Not Ranked – Insufficient Data”; missing data is never counted as zero.</p>';
       var tbody = root.querySelector('tbody'), q = root.querySelector('input'), sel = root.querySelector('select');
       var sortKey = 'rank', dir = 1;
       function key(r) {
@@ -70,9 +83,9 @@
         var list = rows.filter(function (r) { return (!t || r.country.name.toLowerCase().indexOf(t) > -1) && (!reg || r.country.region === reg); })
           .sort(function (a, b) { var x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * dir; });
         tbody.innerHTML = list.map(function (r) {
-          return '<tr class="' + (r.is_ranked ? '' : 'is-unranked') + '"><td class="bnn-i-rank">' + (r.is_ranked ? r.rank : '–') + '</td>' +
+          return '<tr class="' + (r.is_ranked ? '' : 'is-unranked') + '"><td class="bnn-i-rank">' + (r.is_ranked ? r.rank + rankRange(r) : '–') + '</td>' +
             '<td><a href="' + countryUrl(r.country.slug) + '"><span class="bnn-i-flag">' + esc(r.country.flag_emoji) + '</span>' + esc(r.country.name) + '</a><small>' + esc(r.country.region) + '</small></td>' +
-            '<td>' + (r.is_ranked ? '<strong>' + fmt(r.score, 1) + '</strong>' + bar(r.score) : '<em class="bnn-i-muted">' + esc(r.status_label) + '</em>') + '</td>' +
+            '<td>' + (r.is_ranked ? '<strong>' + fmt(r.score, 1) + '</strong> ' + ci(r) + bar(r.score) + editorial(r) : '<em class="bnn-i-muted">' + esc(r.status_label) + '</em> ' + editorial(r)) + '</td>' +
             '<td>' + (r.is_ranked ? change(r.position_change) : '') + '</td><td>' + fmt(r.coverage * 100, 0) + '%</td><td>' + (r.is_ranked ? badge(r.confidence) : '') + '</td></tr>';
         }).join('') || '<tr><td colspan="6" class="bnn-i-muted">No matching countries.</td></tr>';
       }
@@ -151,7 +164,7 @@
         var current = obs.filter(function (o) { return !o.is_historical; }), hist = obs.filter(function (o) { return o.is_historical; });
         var cs = catScores[cat.slug];
         function row(o) {
-          return '<tr><td>' + esc(o.indicator_name) + '</td><td><strong>' + fmt(o.value) + '</strong> ' + esc(o.unit) + '</td><td>' + esc(refLabel(o.reference_label)) +
+          return '<tr><td>' + esc(o.indicator_name) + (o.sample_size ? '<small class="bnn-i-ci">' + fmt(o.sample_size, 0) + ' events analysed</small>' : '') + '</td><td><strong>' + fmt(o.value) + '</strong> ' + esc(o.unit) + (o.ci_low != null ? '<small class="bnn-i-ci">90%: ' + fmt(o.ci_low) + '–' + fmt(o.ci_high) + '</small>' : '') + '</td><td>' + esc(refLabel(o.reference_label)) +
             (o.data_status !== 'final' ? ' <span class="bnn-i-badge bnn-i-c-low">' + esc(o.data_status) + '</span>' : '') + '</td>' +
             '<td>' + (o.published_rank ? o.published_rank + ' / ' + o.published_rank_of : '–') + '</td>' +
             '<td><a href="' + esc(o.source_url) + '" target="_blank" rel="noopener">' + esc(o.source) + '</a></td></tr>';
@@ -170,7 +183,7 @@
         '<h1><span class="bnn-i-flag big">' + esc(c.flag_emoji) + '</span> ' + esc(c.name) + '</h1>' +
         '<p class="bnn-i-meta">Capital: ' + esc(c.capital) + ' · ' + freshness(d.last_updated) + '</p></div>' +
         '<div class="bnn-i-kpi">' + (overall && overall.is_ranked ?
-          '<span>BNN Asia Index</span><b>' + fmt(overall.score, 1) + '</b><em>Rank ' + overall.rank + ' ' + change(overall.position_change) + '</em>' + badge(overall.confidence) :
+          '<span>BNN Asia Index</span><b>' + fmt(overall.score, 1) + '</b>' + (overall.score_ci ? '<em>90% range ' + fmt(overall.score_ci[0], 1) + '–' + fmt(overall.score_ci[1], 1) + '</em>' : '') + '<em>Rank ' + overall.rank + (overall.rank_interval && overall.rank_interval[0] !== overall.rank_interval[1] ? ' (plausible ' + overall.rank_interval[0] + '–' + overall.rank_interval[1] + ')' : '') + ' ' + change(overall.position_change) + '</em>' + badge(overall.confidence) + editorial(overall) :
           '<span>BNN Asia Index</span><b class="na">Not ranked</b><em>' + esc(overall ? overall.status_label : 'Ranking not yet published') + '</em>') + '</div></header>' +
         (Object.keys(catScores).length ? '<div class="bnn-i-card">' + svgBars(d.categories.filter(function (x) { return catScores[x.slug]; }).map(function (x) { return { label: x.name, score: catScores[x.slug].score }; })) + '</div>' : '') +
         '<div class="bnn-i-tabs" role="tablist">' + tabs + '</div><div class="bnn-i-panels">' + panels + '</div>' +
@@ -180,7 +193,7 @@
           return '<li><time>' + esc(date(i.event_date)) + '</time><strong>' + esc(i.type) + '</strong> ' + esc(i.title) +
             '<div class="bnn-i-src">' + i.sources.map(function (s) { return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.organisation) + '</a>'; }).join(' · ') + '</div></li>';
         }).join('') + '</ul>' : '<div class="bnn-i-empty">No published, verified incidents for this period yet.</div>') +
-        (d.reports.length ? '<h2 class="bnn-i-h2">Reports</h2><ul class="bnn-i-reports">' + d.reports.map(function (r) { return '<li><a href="' + esc(r.pdf_url) + '" target="_blank" rel="noopener">⬇ ' + esc(r.title) + ' (PDF)</a></li>'; }).join('') + '</ul>' : '') +
+        (d.reports.length ? '<h2 class="bnn-i-h2">Reports</h2><ul class="bnn-i-reports">' + d.reports.map(function (r) { return '<li>' + (r.html_url ? '<a href="' + esc(r.html_url) + '" target="_blank" rel="noopener">' + esc(r.title) + '</a> · ' : '') + '<a href="' + esc(r.pdf_url) + '" target="_blank" rel="noopener">⬇ PDF</a></li>'; }).join('') + '</ul>' : '') +
         '<p class="bnn-i-note">All figures link to their original source. BNN Asia scores are BNN Asia’s own calculation; official ranks belong to the publishing organisations.</p>';
       root.querySelectorAll('[role=tab]').forEach(function (b) {
         b.addEventListener('click', function () {
@@ -264,7 +277,35 @@
     }).catch(function () { fail(root); });
   }
 
-  var VIEWS = { ranking: ranking, official: official, countries: countries, country: country, category: category, compare: compare, incidents: incidents };
+  /* ---------- Methodology (live) ---------- */
+  function methodology(root) {
+    api('methodology/').then(function (d) {
+      var m = d.methodology || {}, w = m.weights || [], vol = d.data_volume || {};
+      root.innerHTML =
+        '<div class="bnn-i-counts">' +
+        '<div><b>' + fmt(vol.events_processed, 0) + '</b><span>events analysed (' + esc(d.period || '') + ')</span></div>' +
+        '<div><b>' + fmt(vol.days_ingested, 0) + '</b><span>days of data processed</span></div>' +
+        '<div><b>' + fmt((d.indicators || []).length, 0) + '</b><span>indicators</span></div>' +
+        '<div><b>' + esc(m.version || '–') + '</b><span>methodology version</span></div></div>' +
+        (vol.last_update ? '<p class="bnn-i-meta">' + freshness(vol.last_update) + '</p>' : '') +
+        '<h2 class="bnn-i-h2">How the index is built</h2><div class="bnn-i-card"><p>' + esc(m.description || '') + '</p></div>' +
+        '<h2 class="bnn-i-h2">Category weights</h2><div class="bnn-i-card">' + w.map(function (x) {
+          return '<div class="bnn-i-wrow"><span>' + esc(x.category || x.name) + (x.active === false ? ' <em class="bnn-i-muted">(currently disabled – weight redistributed)</em>' : '') + '</span>' + bar(x.weight) + '<b>' + fmt(x.weight, 0) + '%</b></div>';
+        }).join('') + '</div>' +
+        '<h2 class="bnn-i-h2">What we count</h2><div class="bnn-i-scroll"><table class="bnn-i-table compact"><thead><tr><th>Signal</th><th>Category</th><th>Event codes (CAMEO)</th><th>Targets</th><th>Perpetrators</th></tr></thead><tbody>' +
+        (d.signals || []).map(function (s) {
+          return '<tr><td>' + esc(s.label) + '</td><td>' + esc(s.category) + '</td><td>' + esc((s.cameo || []).join(', ')) + '</td><td>' + esc((s.targets || []).join(', ') || 'any') + '</td><td>' + esc((s.perpetrators || []).join(', ') || 'any') + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<h2 class="bnn-i-h2">Indicators</h2><div class="bnn-i-scroll"><table class="bnn-i-table compact"><thead><tr><th>Indicator</th><th>Category</th><th>Direction</th><th>Source</th></tr></thead><tbody>' +
+        (d.indicators || []).map(function (i) {
+          return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.category) + '</td><td>' + (i.direction === 'lower_better' ? 'lower is better' : 'higher is better') + '</td><td>' + esc(i.source) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<h2 class="bnn-i-h2">Limitations</h2><div class="bnn-i-card"><p>' + esc(m.limitations || '') + '</p></div>' +
+        '<p class="bnn-i-note"><a class="bnn-i-dl" href="' + esc((CFG.apiPublic || '') + 'ranking.csv') + '">⬇ Download the full ranking (CSV)</a> · <a href="' + esc((CFG.apiPublic || '').replace(/v1\/?$/, '') + 'docs/') + '">Open API documentation</a></p>';
+    }).catch(function () { fail(root, 'Methodology details are temporarily unavailable.'); });
+  }
+
+  var VIEWS = { methodology: methodology, ranking: ranking, official: official, countries: countries, country: country, category: category, compare: compare, incidents: incidents };
   function boot() {
     document.querySelectorAll('.bnn-intel[data-bnn]').forEach(function (root) {
       var fn = VIEWS[root.dataset.bnn];

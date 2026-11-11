@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class BNN_Intel_Public {
 
-	const SHORTCODES = array( 'ranking', 'official', 'countries', 'country', 'category', 'compare', 'incidents' );
+	const SHORTCODES = array( 'ranking', 'official', 'countries', 'country', 'category', 'compare', 'incidents', 'methodology' );
 
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'add_rewrite' ) );
@@ -56,6 +56,7 @@ class BNN_Intel_Public {
 		wp_localize_script( 'bnn-intel', 'BNN_INTEL', array(
 			'endpoint'    => esc_url_raw( rest_url( 'bnn-intel/v1/data' ) ),
 			'countryBase' => home_url( '/' . BNN_Intel_API::settings()['country_base'] . '/' ),
+			'apiPublic'   => esc_url_raw( BNN_Intel_API::settings()['api_base'] ),
 		) );
 	}
 

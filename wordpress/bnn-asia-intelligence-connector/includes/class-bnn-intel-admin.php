@@ -84,6 +84,7 @@ class BNN_Intel_Admin {
 				<tr><td><code>[bnn_intel_category slug="good-governance"]</code></td><td>Category page: indicators and country values.</td></tr>
 				<tr><td><code>[bnn_intel_compare]</code></td><td>Interactive country comparison.</td></tr>
 				<tr><td><code>[bnn_intel_incidents country="bangladesh"]</code></td><td>Published, verified incidents.</td></tr>
+				<tr><td><code>[bnn_intel_methodology]</code></td><td>Live methodology: weights, event taxonomy, data volume, limitations, open-data downloads.</td></tr>
 			</tbody></table>
 		</div>
 		<?php
