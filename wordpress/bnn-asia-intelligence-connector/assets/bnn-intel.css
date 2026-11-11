@@ -61,3 +61,5 @@ tr.is-unranked td{color:var(--mut)}
 .bnn-i-reports{padding-left:18px}
 @media (max-width:640px){.bnn-i-hero{padding:26px}.bnn-i-tools input,.bnn-i-tools select{min-width:0;width:100%}.bnn-i-fallback{columns:1}}
 @media (prefers-reduced-motion:reduce){.bnn-i-tile,.bnn-i-skeleton{transition:none;animation:none}}
+
+body.bnn-intel-country .bnn-intel-page{max-width:1160px;margin:40px auto 80px;padding:0 24px}

@@ -23,6 +23,10 @@
   function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
   function fmt(v, d) { return v == null ? '–' : Number(v).toLocaleString(undefined, { maximumFractionDigits: d == null ? 2 : d }); }
   function date(s) { return s ? new Date(s).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''; }
+  function refLabel(s) {
+    return String(s || '').replace(/^GOV_WGI_\w+\.EST /, 'WGI ').replace(/^WEO \w+ /, 'IMF WEO ')
+      .replace(/^(SP|NY|SI)\.[\w.]+ /, 'World Bank ').replace(/^HDI /, 'UNDP HDI ').replace(/^BNN /, 'BNN verified ');
+  }
   function countryUrl(slug) { return CFG.countryBase + slug + '/'; }
   function badge(conf) { return '<span class="bnn-i-badge bnn-i-c-' + esc(conf) + '">' + esc(conf) + ' confidence</span>'; }
   function change(n) {
@@ -85,7 +89,7 @@
     api('official-rankings/', { indicator: root.dataset.indicator || 'wgi_cc' }).then(function (d) {
       if (!d.results.length) return fail(root, 'No published data for this index yet.');
       var src = d.results[0];
-      root.innerHTML = '<div class="bnn-i-head"><div><span class="bnn-i-eyebrow">' + esc(src.source) + ' · ' + esc(d.edition) + '</span>' +
+      root.innerHTML = '<div class="bnn-i-head"><div><span class="bnn-i-eyebrow">' + esc(src.source) + ' · ' + esc(refLabel(d.edition)) + '</span>' +
         '<p class="bnn-i-meta">' + esc(d.note) + '</p></div></div>' +
         '<div class="bnn-i-scroll"><table class="bnn-i-table"><thead><tr><th>Asia position<br><small>(BNN calculation)</small></th><th>Country</th><th>Value</th><th>Official global rank</th><th>Source</th></tr></thead><tbody>' +
         d.results.map(function (r) {
@@ -147,7 +151,7 @@
         var current = obs.filter(function (o) { return !o.is_historical; }), hist = obs.filter(function (o) { return o.is_historical; });
         var cs = catScores[cat.slug];
         function row(o) {
-          return '<tr><td>' + esc(o.indicator_name) + '</td><td><strong>' + fmt(o.value) + '</strong> ' + esc(o.unit) + '</td><td>' + esc(o.reference_label) +
+          return '<tr><td>' + esc(o.indicator_name) + '</td><td><strong>' + fmt(o.value) + '</strong> ' + esc(o.unit) + '</td><td>' + esc(refLabel(o.reference_label)) +
             (o.data_status !== 'final' ? ' <span class="bnn-i-badge bnn-i-c-low">' + esc(o.data_status) + '</span>' : '') + '</td>' +
             '<td>' + (o.published_rank ? o.published_rank + ' / ' + o.published_rank_of : '–') + '</td>' +
             '<td><a href="' + esc(o.source_url) + '" target="_blank" rel="noopener">' + esc(o.source) + '</a></td></tr>';
@@ -236,7 +240,7 @@
               var best = i.direction === 'lower_better' ? Math.min.apply(null, nums) : Math.max.apply(null, nums);
               return '<tr><td>' + esc(i.name) + ' <small>' + esc(i.unit) + '</small></td>' + chosen.map(function (s) {
                 var v = vals[s];
-                return '<td' + (v && v.value === best && nums.length > 1 ? ' class="best"' : '') + '>' + (v ? '<a href="' + esc(v.source_url) + '" target="_blank" rel="noopener" title="' + esc(v.ref) + '">' + fmt(v.value) + '</a>' : '<span class="bnn-i-muted">no data</span>') + '</td>';
+                return '<td' + (v && v.value === best && nums.length > 1 ? ' class="best"' : '') + '>' + (v ? '<a href="' + esc(v.source_url) + '" target="_blank" rel="noopener" title="' + esc(refLabel(v.ref)) + '">' + fmt(v.value) + '</a>' : '<span class="bnn-i-muted">no data</span>') + '</td>';
               }).join('') + '</tr>';
             }).join('') + '</tbody></table></div><p class="bnn-i-note">Highlighted = best among selected countries. “no data” means no verified figure – it is not zero.</p>';
         }).catch(function () { fail(out); });

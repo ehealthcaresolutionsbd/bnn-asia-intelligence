@@ -14,6 +14,10 @@ class BNN_Intel_Public {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
 		add_filter( 'template_include', array( __CLASS__, 'country_template' ) );
 		add_filter( 'pre_get_document_title', array( __CLASS__, 'country_title' ), 20 );
+		// Full-width, no sidebar on the generated country pages (Astra and most themes).
+		add_filter( 'astra_page_layout', fn( $l ) => get_query_var( 'bnn_country' ) ? 'no-sidebar' : $l, 20 );
+		add_filter( 'astra_get_content_layout', fn( $l ) => get_query_var( 'bnn_country' ) ? 'plain-container' : $l, 20 );
+		add_filter( 'body_class', fn( $c ) => get_query_var( 'bnn_country' ) ? array_merge( $c, array( 'bnn-intel-country' ) ) : $c );
 		foreach ( self::SHORTCODES as $sc ) {
 			add_shortcode( 'bnn_intel_' . $sc, function ( $atts ) use ( $sc ) {
 				return BNN_Intel_Public::render( $sc, (array) $atts );
