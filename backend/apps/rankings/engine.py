@@ -229,8 +229,11 @@ def calculate(methodology: RankingMethodology, *, note: str = "", mc_draws: int 
             methodology=methodology, reporting_period=period, calculated_at=timezone.now(),
             effective_weights={str(k): round(v, 6) for k, v in weights.items()},
             overall_available=available, unavailable_reason=reason, notes=note)
-        prev = (RankingSnapshot.objects.filter(reporting_period=period, status="published")
-                .exclude(pk=snap.pk).order_by("-published_at").first())
+        # Rank change is only shown against the previous published run of the SAME methodology version: a change
+        # of method is not a change in the country's situation.
+        prev = (RankingSnapshot.objects.filter(reporting_period=period, methodology=methodology,
+                                               status__in=["published", "superseded"])
+                .exclude(pk=snap.pk).exclude(published_at=None).order_by("-published_at").first())
         prev_rank = {}
         if prev:
             prev_rank = {(s.country_id, s.category_id): s.rank for s in prev.scores.all()}
