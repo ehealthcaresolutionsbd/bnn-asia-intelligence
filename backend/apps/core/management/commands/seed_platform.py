@@ -22,7 +22,8 @@ SOURCES = [
     ("World Bank – Worldwide Governance Indicators", "wb-wgi", "World Bank", WGI, "original", "api",
      "https://api.worldbank.org/v2", "worldbank",
      {"indicators": [["wgi_ge", "GOV_WGI_GE.EST", 3], ["wgi_rq", "GOV_WGI_RQ.EST", 3], ["wgi_cc", "GOV_WGI_CC.EST", 3],
-                     ["wgi_rl", "GOV_WGI_RL.EST", 3], ["wgi_va", "GOV_WGI_VA.EST", 3], ["wgi_pv", "GOV_WGI_PV.EST", 3]]},
+                     ["wgi_rl", "GOV_WGI_RL.EST", 3], ["wgi_va", "GOV_WGI_VA.EST", 3], ["wgi_pv", "GOV_WGI_PV.EST", 3],
+                     ["wgi_va_hr", "GOV_WGI_VA.EST", 3], ["wgi_va_pf", "GOV_WGI_VA.EST", 3]]},
      5, "configured", True, "CC BY 4.0. Attribution: World Bank, Worldwide Governance Indicators."),
     ("World Bank – World Development Indicators", "wb-wdi", "World Bank", "https://data.worldbank.org", "original", "api",
      "https://api.worldbank.org/v2", "worldbank",
@@ -81,8 +82,8 @@ INDICATORS = [
     ("ti_cpi_score", "good-governance", "Corruption Perceptions Index", "0–100", "score", "higher_better", 0, 100, False, True, "ti-cpi", 1.5),
     ("wgi_rl", "rule-of-law", "Rule of Law (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, True, "wb-wgi", 1),
     ("wjp_rli", "rule-of-law", "WJP Rule of Law Index", "0–1", "score", "higher_better", 0, 1, False, True, "wjp-rli", 1.5),
-    ("wgi_va", "freedom-democracy", "Voice and Accountability (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, True, "wb-wgi", 1),
-    ("wgi_pv", "freedom-democracy", "Political Stability & Absence of Violence (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, True, "wb-wgi", 0.5),
+    ("wgi_va", "freedom-democracy", "Voice and Accountability (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, True, "wb-wgi", 3),
+    ("wgi_pv", "freedom-democracy", "Political Stability & Absence of Violence (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, False, "wb-wgi", 0.5),
     ("fh_total", "freedom-democracy", "Freedom in the World total score", "0–100", "score", "higher_better", 0, 100, False, True, "fh-fiw", 1.5),
     ("rsf_score", "press-freedom", "RSF Press Freedom score", "0–100", "score", "higher_better", 0, 100, False, True, "rsf-index", 2),
     ("bnn_journalists_killed", "press-freedom", "Journalists killed (verified, BNN)", "count", "count", "lower_better", None, None, False, True, "bnn-incidents", 1),
@@ -106,6 +107,10 @@ INDICATORS = [
     ("bnn_sig_state_repression", "human-rights", "State repression of civilians & civil society per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 1.5),
     ("bnn_sig_arrests", "human-rights", "Arrests & detentions by state actors per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 1),
     ("bnn_sig_violence", "human-rights", "Killings & physical assaults per 1,000 events (BNN event data)", "per 1,000 events", "rate", "lower_better", None, None, False, True, "bnn-signals", 1.5),
+    # Independent anchor (v2.2.0): event data under-reports abuses where media are closed, so WGI Voice & Accountability
+    # (civil liberties, freedom of expression and media) is blended into the two event-driven categories.
+    ("wgi_va_hr", "human-rights", "Civil liberties anchor – Voice & Accountability (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, True, "wb-wgi", 4),
+    ("wgi_va_pf", "press-freedom", "Media & expression anchor – Voice & Accountability (WGI)", "est.", "score", "higher_better", -2.5, 2.5, False, True, "wb-wgi", 5),
     ("bnn_sig_protest_repression", "freedom-democracy", "Share of protest events met with repression (BNN event data)", "%", "rate", "lower_better", None, None, False, True, "bnn-signals", 1),
 ]
 
@@ -156,6 +161,12 @@ V21_NOTE = (" Version 2.1.0 (November 2026) activates the Freedom & Democracy ca
             "Accountability and Political Stability (2026 edition) plus BNN's own protest-repression statistic. Reason: "
             "event data alone under-reports repression in closed media environments, so on its own it ranked several "
             "closed states too high; an independent measure of political rights and civil liberties corrects this.")
+
+V22_NOTE = (" Version 2.2.0 (November 2026): in Human Rights and Press Freedom the event statistics are blended "
+            "with an independent anchor, WGI Voice & Accountability (equal weight to the event block), because "
+            "censored media report few abuses and event data alone ranked closed states highest; Political Stability "
+            "is shown but no longer scored (stability is not democracy); the protest-repression share needs at least "
+            "30 protest events, otherwise it is missing.")
 
 WEIGHTS_2026 = {"good-governance": 25, "human-rights": 25, "freedom-democracy": 20, "rule-of-law": 15,
                 "press-freedom": 10, "economic-social": 5}
@@ -232,6 +243,13 @@ class Command(BaseCommand):
             IntelligenceCategory.objects.filter(slug="freedom-democracy", is_enabled=False,
                                                 activation_date__isnull=True).update(
                 is_enabled=True, activation_date=dt.date(2026, 1, 1))
+        m22, created = RankingMethodology.objects.get_or_create(
+            name="BNN Asia Index", version="2.2.0", reporting_period=ReportingPeriod.objects.get(slug="2026"),
+            defaults={"mode": "auto", "min_coverage": 0.6, "description": V2_DESCRIPTION + V21_NOTE + V22_NOTE,
+                      "limitations": V2_LIMITATIONS})
+        if created:
+            for slug, w in WEIGHTS_2026.items():
+                MethodologyWeight.objects.create(methodology=m22, category=cats[slug], weight=w)
         self._groups()
         self.stdout.write(self.style.SUCCESS(
             f"Seeded {Country.objects.count()} countries, {IntelligenceCategory.objects.count()} categories, "

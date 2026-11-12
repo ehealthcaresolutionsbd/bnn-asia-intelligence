@@ -39,6 +39,7 @@ from apps.sources.models import DataSource
 from .models import CountryVolumeDaily, IngestedDay, SignalDaily
 
 MIN_EVENTS = 300
+MIN_SHARE_EVENTS = 30   # a share (e.g. protest repression %) needs at least 30 events in its denominator
 MIN_WEEKS = 4          # at least 4 ISO weeks with data before a value (and its interval) is published
 BOOTSTRAP_B = 1000
 CI_LEVEL = 0.90
@@ -154,7 +155,8 @@ def build_signal_indicators(period, *, today: dt.date | None = None) -> dict:
                     den_w = sum((weekly(sig[c.id][k]) for k in den_spec), np.zeros(n_weeks))
                     den_art = sum(articles(sig[c.id][k]) for k in den_spec)
                 den_total = int(den_w.sum())
-                if total_events < MIN_EVENTS or den_total == 0 or int((v_week > 0).sum()) < MIN_WEEKS:
+                if (total_events < MIN_EVENTS or den_total == 0 or int((v_week > 0).sum()) < MIN_WEEKS
+                        or (den_spec != "volume" and den_total < MIN_SHARE_EVENTS)):
                     IndicatorObservation.objects.filter(indicator=ind, country=c, reporting_period=period,
                                                         source=src).delete()
                     summary["missing"] += 1
