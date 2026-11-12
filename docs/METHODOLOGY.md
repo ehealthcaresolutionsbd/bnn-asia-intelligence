@@ -30,7 +30,7 @@ BNN Asia's re-ordering of Asian countries and is labelled as such.
 
 # BNN Asia Index – methodology v2.0.0 (2026, data-driven)
 
-v2 adds BNN Asia's **own statistics** computed from the GDELT 2.0 event database (`apps/signals`). v1.0.0 is unchanged.
+v2 adds BNN Asia's **own statistics** computed from the GDELT event data (daily export)base (`apps/signals`). v1.0.0 is unchanged.
 
 **Signals.** Each GDELT event located in one of the 48 countries is classified by public rules (`apps/signals/rules.py`:
 CAMEO code prefix + target/perpetrator actor types). Rules are served at `GET /api/v1/methodology/`.
@@ -70,3 +70,15 @@ and publishes; previous snapshots become *superseded*. Open data: `GET /api/v1/r
 
 **Limitations.** Media-based event data reflects reporting, not ground truth; GDELT machine coding contains errors;
 state-controlled media environments under-report repression and can make closed countries look better.
+
+## Version 2.1.0 and 2.2.0 (November 2026)
+
+The first full-year run of v2.0.0 (314 days of event data, about 9.1 million in-country events) ranked several closed
+states near the top: where media are censored, few abuses are reported, so event rates look low. Two corrections followed.
+
+- **2.1.0** activated the Freedom & Democracy category (WGI Voice & Accountability, plus BNN's protest-repression share).
+- **2.2.0** blended an independent anchor, WGI Voice & Accountability, into Human Rights (weight 4 against 4 for the event
+  block) and Press Freedom (5 against 5). Political Stability is shown but no longer scored. The protest-repression share
+  needs at least 30 protest events, otherwise it is missing.
+
+Both versions are published alongside the earlier snapshots, which remain available as "superseded" for comparison.

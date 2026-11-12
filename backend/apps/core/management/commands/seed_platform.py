@@ -70,7 +70,7 @@ SOURCES = [
      "", "", {}, 4, "configured", True, "Internal: indicators aggregated from verified incidents."),
     ("BNN Asia – event data analysis (GDELT)", "bnn-signals", "BNN Asia", "https://bnnasia.org", "original", "dataset",
      "", "", {}, 4, "configured", True,
-     "Internal: BNN Asia's own statistics computed from the GDELT 2.0 event database (open data, free reuse with "
+     "Internal: BNN Asia's own statistics computed from the GDELT event data (daily export)base (open data, free reuse with "
      "attribution to the GDELT Project). Machine-coded media events, coverage-corrected, with bootstrap intervals."),
 ]
 
@@ -119,7 +119,7 @@ LOG_TRANSFORM = {"bnn_sig_media_repression", "bnn_sig_censorship", "bnn_sig_stat
                  "bnn_sig_violence"}
 
 V2_DESCRIPTION = (
-    "BNN Asia's own annual index, computed from big data BNN Asia collects itself. (1) Event data: every daily GDELT 2.0 "
+    "BNN Asia's own annual index, computed from big data BNN Asia collects itself. (1) Event data: every daily GDELT "
     "event export is processed; events located in one of 48 Asian countries are classified into public BNN signals "
     "(CAMEO event code + actor-type rules, listed on this page). (2) Coverage correction: signal counts are divided by "
     "ALL events recorded in that country in the same period (rate per 1,000 events; protest repression as % of protest "

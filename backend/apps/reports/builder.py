@@ -44,7 +44,7 @@ Z_FINDING = 1.0              # |z| from which a deviation counts as notable
 TREND_FINDING = 25.0         # |% change| from which a half-period trend counts as notable
 MAX_FINDINGS, MIN_FINDINGS = 6, 3
 GDELT_URL = "https://www.gdeltproject.org/data.html"
-GDELT_SOURCE = "GDELT 2.0 Event Database – BNN Asia daily aggregation"
+GDELT_SOURCE = "GDELT Event Database (daily export) – BNN Asia daily aggregation"
 
 STATS_NOTE = (
     "Event-data statistics. Signal counts are GDELT events located in the country and matched to the public BNN Asia "

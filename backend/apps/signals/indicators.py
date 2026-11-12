@@ -104,7 +104,7 @@ def build_signal_indicators(period, *, today: dt.date | None = None) -> dict:
     src, _ = DataSource.objects.get_or_create(slug=SOURCE_SLUG, defaults=dict(
         name="BNN Asia – event data analysis (GDELT)", organisation="BNN Asia", website="https://bnnasia.org",
         kind="original", method="dataset", status="configured", reliability=4,
-        terms_notes="Internal: statistics computed by BNN Asia from GDELT 2.0 event data."))
+        terms_notes="Internal: statistics computed by BNN Asia from GDELT event data (daily export)."))
     indicators = {i.code: i for i in Indicator.objects.filter(code__in=SIGNAL_INDICATORS)}
     end = last_ingested_day(period)
     summary = {"period": period.slug, "reference_end": end, "written": 0, "missing": 0, "countries": 0}
