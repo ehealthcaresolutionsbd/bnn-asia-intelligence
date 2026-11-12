@@ -10,7 +10,7 @@ from apps.rankings.models import RankingMethodology
 from .indicators import build_signal_indicators
 
 log = logging.getLogger(__name__)
-V2 = ("BNN Asia Index", "2.0.0")
+V2 = ("BNN Asia Index", "2.1.0")
 
 
 def v2_methodology(period) -> RankingMethodology:

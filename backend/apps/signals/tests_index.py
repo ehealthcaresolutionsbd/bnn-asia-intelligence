@@ -30,6 +30,7 @@ class IndexTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("seed_platform", verbosity=0)
+        IntelligenceCategory.objects.filter(slug="freedom-democracy").update(is_enabled=False)  # tests cover a disabled category
         cls.period = ReportingPeriod.objects.get(slug="2026")
         cls.v2 = RankingMethodology.objects.get(version="2.0.0")
         cls.cats = {c.slug: c for c in IntelligenceCategory.objects.all()}
@@ -73,7 +74,7 @@ class SeedTests(IndexTestCase):
         self.assertEqual(sorted(v2.weights.values_list("weight", flat=True)), [5, 10, 15, 20, 25, 25])
         self.assertIn("bootstrap", v2.description)
         self.assertIn("ground truth", v2.limitations)
-        self.assertFalse(self.cats["freedom-democracy"].is_enabled)
+        self.assertTrue(RankingMethodology.objects.get(version="2.1.0").description.endswith("corrects this."))
         self.assertEqual(Indicator.objects.get(code="bnn_sig_violence").transform, "log")
         self.assertEqual(Indicator.objects.get(code="bnn_sig_protest_repression").transform, "none")
         self.assertEqual(DataSource.objects.filter(slug="bnn-signals").count(), 1)
@@ -292,8 +293,7 @@ class PipelineAndApiTests(IndexTestCase):
         out = refresh_annual_index(self.period)
         self.assertEqual(out["status"], "published")
         self.assertEqual(out["ranked"], 6)
-        self.v2.refresh_from_db()
-        self.assertTrue(self.v2.is_published)
+        self.assertTrue(RankingMethodology.objects.get(version="2.1.0").is_published)
         out2 = refresh_annual_index(self.period)                      # calculate() under a frozen methodology
         self.assertEqual(RankingSnapshot.objects.get(pk=out["snapshot"]).status, "superseded")
         self.assertEqual(RankingSnapshot.objects.get(pk=out2["snapshot"]).status, "published")
@@ -311,7 +311,7 @@ class PipelineAndApiTests(IndexTestCase):
         refresh_annual_index(self.period)
         r = self.api.get("/api/v1/ranking/").json()
         row = r["results"][0]
-        self.assertEqual(r["snapshot"]["methodology"]["version"], "2.0.0")
+        self.assertEqual(r["snapshot"]["methodology"]["version"], "2.1.0")
         self.assertEqual(len(row["score_ci"]), 2)
         self.assertLessEqual(row["rank_interval"][0], row["rank"])
         self.assertEqual(row["editorial"], [])
@@ -328,7 +328,7 @@ class PipelineAndApiTests(IndexTestCase):
         rows = list(csv.DictReader(io.StringIO(b"".join(resp.streaming_content).decode())))
         self.assertEqual(len(rows), Country.objects.filter(is_active=True).count())
         self.assertEqual(rows[0]["rank"], "1")
-        self.assertEqual(rows[0]["methodology_version"], "2.0.0")
+        self.assertEqual(rows[0]["methodology_version"], "2.1.0")
         self.assertNotEqual(rows[0]["score_ci_low"], "")
         resp = self.api.get("/api/v1/ranking.csv?category=human-rights")
         rows = list(csv.DictReader(io.StringIO(b"".join(resp.streaming_content).decode())))
@@ -336,7 +336,7 @@ class PipelineAndApiTests(IndexTestCase):
         self.assertEqual(self.api.get("/api/v1/ranking.csv?category=freedom-democracy").status_code, 404)
 
         m = self.api.get("/api/v1/methodology/").json()
-        self.assertEqual(m["methodology"]["version"], "2.0.0")
+        self.assertEqual(m["methodology"]["version"], "2.1.0")
         self.assertEqual(len(m["methodology"]["weights"]), 6)
         self.assertIn("limitations", m["methodology"])
         keys = {x["key"] for x in m["signals"]}

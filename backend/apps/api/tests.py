@@ -25,6 +25,7 @@ class PlatformTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         call_command("seed_platform", verbosity=0)
+        IntelligenceCategory.objects.filter(slug="freedom-democracy").update(is_enabled=False)  # tests cover a disabled category
         cls.period = ReportingPeriod.objects.get(slug="2026")
         cls.src = DataSource.objects.get(slug="wb-wgi")
         cls.m = RankingMethodology.objects.get(version="1.0.0")
@@ -63,7 +64,16 @@ class CategoryTests(PlatformTestCase):
         cat.save()
         self.assertTrue(IntelligenceCategory.objects.get(pk=cat.pk).ranked)
 
-    def test_freedom_democracy_disabled_initially(self):
+    def test_seed_activates_freedom_democracy_once(self):
+        fd = IntelligenceCategory.objects.filter(slug="freedom-democracy")
+        RankingMethodology.objects.filter(version="2.1.0").delete()
+        fd.update(is_enabled=False, activation_date=None)
+        call_command("seed_platform", verbosity=0)
+        self.assertTrue(fd.get().is_enabled)                      # v2.1.0 activates it
+        fd.update(is_enabled=False)                               # an admin switches it off again
+        RankingMethodology.objects.filter(version="2.1.0").delete()
+        call_command("seed_platform", verbosity=0)
+        self.assertFalse(fd.get().is_enabled)                     # never overridden
         self.assertFalse(self.cats["freedom-democracy"].is_enabled)
         self.assertTrue(all(self.cats[s].is_enabled for s in ["good-governance", "human-rights", "press-freedom",
                                                               "rule-of-law", "economic-social"]))

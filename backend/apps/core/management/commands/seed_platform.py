@@ -152,6 +152,11 @@ INCIDENT_INDICATOR_MAP = {
     "bnn_torture": ["torture"],
 }
 
+V21_NOTE = (" Version 2.1.0 (November 2026) activates the Freedom & Democracy category: World Bank WGI Voice & "
+            "Accountability and Political Stability (2026 edition) plus BNN's own protest-repression statistic. Reason: "
+            "event data alone under-reports repression in closed media environments, so on its own it ranked several "
+            "closed states too high; an independent measure of political rights and civil liberties corrects this.")
+
 WEIGHTS_2026 = {"good-governance": 25, "human-rights": 25, "freedom-democracy": 20, "rule-of-law": 15,
                 "press-freedom": 10, "economic-social": 5}
 
@@ -216,6 +221,17 @@ class Command(BaseCommand):
         if created:
             for slug, w in WEIGHTS_2026.items():
                 MethodologyWeight.objects.create(methodology=m2, category=cats[slug], weight=w)
+        m21, created = RankingMethodology.objects.get_or_create(
+            name="BNN Asia Index", version="2.1.0", reporting_period=ReportingPeriod.objects.get(slug="2026"),
+            defaults={"mode": "auto", "min_coverage": 0.6, "description": V2_DESCRIPTION + V21_NOTE,
+                      "limitations": V2_LIMITATIONS})
+        if created:
+            for slug, w in WEIGHTS_2026.items():
+                MethodologyWeight.objects.create(methodology=m21, category=cats[slug], weight=w)
+            # v2.1.0 activates Freedom & Democracy once; an admin who later switches it off is never overridden.
+            IntelligenceCategory.objects.filter(slug="freedom-democracy", is_enabled=False,
+                                                activation_date__isnull=True).update(
+                is_enabled=True, activation_date=dt.date(2026, 1, 1))
         self._groups()
         self.stdout.write(self.style.SUCCESS(
             f"Seeded {Country.objects.count()} countries, {IntelligenceCategory.objects.count()} categories, "
