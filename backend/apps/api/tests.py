@@ -291,3 +291,20 @@ class ReportTests(PlatformTestCase):
         self.assertIn("Government Effectiveness", txt)
         self.assertNotIn("Regulatory Quality", txt)
         self.assertEqual(len(r.sections["good-governance"]["citations"]), 1)
+
+
+class PhotocardTests(TestCase):
+    def test_renders_png_without_image(self):
+        r = self.client.get("/api/v1/photocard.png", {"title": "Journalist detained in Dhaka", "country": "Bangladesh"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r["Content-Type"], "image/png")
+        from PIL import Image
+        import io
+        self.assertEqual(Image.open(io.BytesIO(r.content)).size, (1024, 1024))
+
+    def test_rejects_foreign_image_host(self):
+        r = self.client.get("/api/v1/photocard.png", {"title": "x", "image": "https://example.com/a.jpg"})
+        self.assertEqual(r.status_code, 400)
+
+    def test_requires_title(self):
+        self.assertEqual(self.client.get("/api/v1/photocard.png").status_code, 400)

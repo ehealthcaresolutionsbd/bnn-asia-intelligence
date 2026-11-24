@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from . import views
+from . import photocard_view, views
 
 router = DefaultRouter()
 router.register("categories", views.CategoryViewSet, basename="category")
@@ -18,4 +18,5 @@ urlpatterns = [
     path("compare/", views.compare, name="compare"),
     path("config/", views.site_config, name="config"),
     path("health/", views.health, name="health"),
+    path("photocard.png", photocard_view.photocard, name="photocard"),
 ]
