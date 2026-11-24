@@ -39,18 +39,19 @@ def photocard(request):
     title = (request.GET.get("title") or "").strip()
     country = (request.GET.get("country") or "").strip()
     image = (request.GET.get("image") or "").strip()
+    date = (request.GET.get("date") or "").strip()
     if not title:
         return HttpResponseBadRequest("title is required")
     if image and not _allowed(image):
         return HttpResponseBadRequest("image must be an https URL on bnnasia.org")
-    key = "photocard:" + hashlib.sha256(f"{image}|{title}|{country}".encode()).hexdigest()
+    key = "photocard:" + hashlib.sha256(f"v2|{image}|{title}|{country}|{date}".encode()).hexdigest()
     png = cache.get(key)
     if png is None:
         try:
             img = _fetch(image) if image else None
         except (requests.RequestException, ValueError) as exc:
             return HttpResponseBadRequest(f"could not load image: {exc}")
-        png = render(img, title[:180], country[:40])
+        png = render(img, title[:160], country[:40], date[:24])
         cache.set(key, png, 86400)
     resp = HttpResponse(png, content_type="image/png")
     resp["Cache-Control"] = "public, max-age=86400"

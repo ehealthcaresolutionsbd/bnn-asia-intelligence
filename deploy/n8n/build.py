@@ -537,6 +537,7 @@ return fresh.map(p => {
   if (room > 40) xBody += '\n\n' + (soften(lead).length > room ? soften(lead).slice(0, room - 1).replace(/\s\S*$/, '') + '…' : soften(lead));
   return { json: {
     id: p.id, link: p.link, country, image,
+    date_label: new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     card_title: soften(headline), fb_caption: fb, x_text: (xBody + xTags).slice(0, 280),
   }};
 });
@@ -562,7 +563,7 @@ def build_b():
              on_error=False, retry=True),
         code("Select new posts", SELECT_B, [660, 100]),
         http("Photocard", [880, 100], "GET", "={{ $('Config').first().json.card_url }}",
-             query=[("image", "={{ $json.image }}"), ("title", "={{ $json.card_title }}"), ("country", "={{ $json.country }}")],
+             query=[("image", "={{ $json.image }}"), ("title", "={{ $json.card_title }}"), ("country", "={{ $json.country }}"), ("date", "={{ $json.date_label }}")],
              response="file:card", timeout=90000, on_error=False, retry=True),
         # Facebook branch
         http("Facebook photo", [1100, 0], "POST",

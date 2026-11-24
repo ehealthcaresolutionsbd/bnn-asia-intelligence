@@ -3,11 +3,11 @@ BNN Asia social photocard, 1024 × 1024 PNG, rendered on the server with Pillow.
 
 Layout (fixed brand design):
   - the photo fills the whole card (cover-cropped, slightly toned down),
-  - BNN ASIA logo top-left on a soft dark fade,
-  - a black shade rising from the bottom carrying a red country label and the headline in white,
-  - a footer line: "BNN ASIA | PROMOTING HUMAN RIGHTS, PRESS FREEDOM AND GOOD GOVERNANCE."
+  - cinematic grade (muted colour, cool shadows, vignette, light grain),
+  - the BNN ASIA logo (white/red version) top-left,
+  - a black shade over the lower part only, carrying a red country label (+ date) and a compact white headline.
 
-Fonts are bundled (SIL Open Font License): Anton (headline), Oswald (country label), Montserrat (logo, footer).
+Fonts are bundled (SIL Open Font License): Oswald.
 """
 from __future__ import annotations
 
@@ -22,7 +22,6 @@ MARGIN = 56
 RED = (227, 30, 36)
 WHITE = (255, 255, 255)
 FONT_DIR = Path(__file__).resolve().parents[2] / "assets" / "fonts"
-TAGLINE = "PROMOTING HUMAN RIGHTS, PRESS FREEDOM AND GOOD GOVERNANCE."
 
 
 @lru_cache(maxsize=64)
@@ -91,71 +90,89 @@ def _wrap(draw, text, font, width):
     return lines
 
 
-def _fit_title(draw, title, width, max_lines=4):
-    for size in range(88, 46, -2):
-        font = _font("Anton-Regular.ttf", size)
+def _grade(photo: Image.Image) -> Image.Image:
+    """Cinematic grade: muted colour, firmer contrast, cool shadows / warm highlights, soft vignette."""
+    photo = ImageEnhance.Color(photo).enhance(0.72)
+    photo = ImageEnhance.Contrast(photo).enhance(1.12)
+    r, g, b = photo.split()
+    r = r.point(lambda v: min(255, int(v * 1.03 + (6 if v > 150 else 0))))
+    b = b.point(lambda v: min(255, int(v * 0.97 + (8 if v < 90 else 0))))
+    photo = Image.merge("RGB", (r, g, b))
+    size = photo.size[0]
+    vign = Image.radial_gradient("L").resize((size, size)).point(lambda v: int(v * 0.55))
+    dark = Image.new("RGB", (size, size), (0, 0, 0))
+    return Image.composite(dark, photo, vign)
+
+
+def _grain(card: Image.Image, strength: int = 10) -> Image.Image:
+    noise = Image.effect_noise(card.size, 40).point(lambda v: 128 + (v - 128) * strength // 40)
+    noise = Image.merge("RGBA", (noise, noise, noise, Image.new("L", card.size, 18)))
+    return Image.alpha_composite(card, noise)
+
+
+@lru_cache(maxsize=1)
+def _logo() -> Image.Image:
+    return Image.open(FONT_DIR.parent / "logo-white.png").convert("RGBA")
+
+
+def _fit_title(draw, title, width, max_lines=3):
+    for size in range(54, 36, -2):
+        font = _font("Oswald.ttf", size, "SemiBold")
         lines = _wrap(draw, title, font, width)
         if len(lines) <= max_lines and all(draw.textlength(l, font=font) <= width for l in lines):
             return font, lines
-    font = _font("Anton-Regular.ttf", 46)
+    font = _font("Oswald.ttf", 36, "SemiBold")
     lines = _wrap(draw, title, font, width)[:max_lines]
     lines[-1] = lines[-1].rstrip(".,;:") + "…"
     return font, lines
 
 
-def render(image_bytes: bytes | None, title: str, country: str = "", size: int = SIZE) -> bytes:
-    title = " ".join((title or "").split()).upper()[:180]
+def render(image_bytes: bytes | None, title: str, country: str = "", date: str = "", size: int = SIZE) -> bytes:
+    title = " ".join((title or "").split()).upper()[:160]
     country = " ".join((country or "").split()).upper()[:40]
+    date = " ".join((date or "").split()).upper()[:24]
 
     if image_bytes:
-        photo = _cover(Image.open(io.BytesIO(image_bytes)), size)
-        photo = ImageEnhance.Color(photo).enhance(0.82)
-        photo = ImageEnhance.Contrast(photo).enhance(1.08)
+        photo = _grade(_cover(Image.open(io.BytesIO(image_bytes)), size))
     else:
-        photo = Image.new("RGB", (size, size), (24, 24, 28))
+        photo = Image.new("RGB", (size, size), (20, 20, 24))
     card = photo.convert("RGBA")
 
-    # Soft dark fade at the top for the logo, strong black shade from the bottom for the text.
-    card = Image.alpha_composite(card, _vertical_fade(size, [(0, 150), (0.2, 40), (0.3, 0), (1, 0)]))
-    card = Image.alpha_composite(card, _vertical_fade(size, [(0, 0), (0.38, 0), (0.62, 170), (0.78, 235), (1, 255)]))
+    # Light fade behind the logo; the text shade only covers the lower part of the frame.
+    card = Image.alpha_composite(card, _vertical_fade(size, [(0, 120), (0.16, 25), (0.24, 0), (1, 0)]))
+    card = Image.alpha_composite(card, _vertical_fade(size, [(0, 0), (0.46, 0), (0.64, 175), (0.8, 235), (1, 252)]))
+    card = _grain(card)
     d = ImageDraw.Draw(card)
 
-    # Logo, top-left.
-    f_logo = _font("Montserrat.ttf", 60, "Black")
-    x, y = MARGIN, 46
-    d.text((x, y), "BNN", font=f_logo, fill=WHITE)
-    d.text((x + d.textlength("BNN ", font=f_logo), y), "ASIA", font=f_logo, fill=RED)
-    logo_w = d.textlength("BNN ASIA", font=f_logo)
-    f_net = _font("Montserrat.ttf", 15, "Bold")
-    tag_y = y + 70
-    _spaced(d, (x + 2, tag_y), "BORDERLESS NEWS NETWORK", f_net, WHITE, 2.6)
-    d.rectangle((x + 2, tag_y + 28, x + 2 + min(logo_w, 130), tag_y + 30), fill=RED)
+    # Logo top-left.
+    logo = _logo()
+    lw = 270
+    logo = logo.resize((lw, round(logo.height * lw / logo.width)), Image.LANCZOS)
+    card.alpha_composite(logo, (MARGIN, 52))
 
-    # Footer.
-    foot_y = size - 74
-    d.line((MARGIN, foot_y - 22, size - MARGIN, foot_y - 22), fill=(255, 255, 255, 90), width=1)
-    f_fb = _font("Montserrat.ttf", 26, "ExtraBold")
-    d.text((MARGIN, foot_y), "BNN", font=f_fb, fill=WHITE)
-    d.text((MARGIN + d.textlength("BNN ", font=f_fb), foot_y), "ASIA", font=_font("Montserrat.ttf", 26, "Medium"), fill=WHITE)
-    bx = MARGIN + d.textlength("BNN ASIA", font=f_fb) + 22
-    d.line((bx, foot_y - 2, bx, foot_y + 34), fill=(255, 255, 255, 150), width=1)
-    _spaced(d, (bx + 22, foot_y + 8), TAGLINE, _font("Montserrat.ttf", 12, "Medium"), (235, 235, 235), 1.6)
-
-    # Headline block, laid out bottom-up above the footer.
-    width = size - 2 * MARGIN
-    f_title, lines = _fit_title(d, title, width)
+    # Text block in the bottom area: red rule + country (+ date), then the headline, left-aligned.
+    text_w = 780
+    f_title, lines = _fit_title(d, title, text_w)
     asc, desc = f_title.getmetrics()
-    line_h = int((asc + desc) * 0.98)
-    block_bottom = foot_y - 52
-    title_top = block_bottom - line_h * len(lines)
+    line_h = int((asc + desc) * 1.0)
+    bottom = size - 64
+    title_top = bottom - line_h * len(lines)
     for i, line in enumerate(lines):
-        d.text((MARGIN, title_top + i * line_h), line, font=f_title, fill=WHITE)
+        d.text((MARGIN + 22, title_top + i * line_h), line, font=f_title, fill=WHITE)
+    # Red accent bar alongside the headline.
+    d.rectangle((MARGIN, title_top + 10, MARGIN + 5, bottom - 6), fill=RED)
 
+    # Country tag: white letters on a red block; the date sits beside it in light grey.
+    f_c = _font("Oswald.ttf", 21, "SemiBold")
+    tag_y = title_top - 50
+    x = MARGIN
     if country:
-        f_c = _font("Oswald.ttf", 30, "SemiBold")
-        cy = title_top - 52
-        d.rectangle((MARGIN, cy - 16, MARGIN + 54, cy - 11), fill=RED)
-        _spaced(d, (MARGIN, cy), country, f_c, RED, 2.0)
+        tw = _spaced_width(d, country, f_c, 3.0)
+        d.rectangle((MARGIN, tag_y, MARGIN + tw + 24, tag_y + 34), fill=RED)
+        _spaced(d, (MARGIN + 12, tag_y + 1), country, f_c, WHITE, 3.0)
+        x = MARGIN + tw + 24 + 16
+    if date:
+        _spaced(d, (x, tag_y + 1), date, f_c, (205, 205, 205), 3.0)
 
     out = io.BytesIO()
     card.convert("RGB").save(out, "PNG", optimize=True)
