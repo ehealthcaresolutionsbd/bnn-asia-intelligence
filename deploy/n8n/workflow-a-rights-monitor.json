@@ -1,0 +1,705 @@
+{
+  "name": "BNN Asia · Rights Monitor (daily 08:00)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "3b8f58bd-2c4a-41d4-8857-4bcac562acdf",
+      "name": "Every day 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3f9dbda8-33c3-4cb0-96a4-6a8e17d3f4da",
+      "name": "Run now (test)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== BNN Asia settings: edit here =====\nconst RULEBOOK = `BNN ASIA EDITORIAL RULEBOOK (the \"brain\"). Follow every rule on every story. If a rule cannot be met, reject the story.\n\nWHO WE ARE\nBNN Asia (Borderless News Network Asia) is an independent organisation that promotes and defends press freedom, human rights and good governance across Asia. We publish short country alerts, in the manner of the Committee to Protect Journalists, but in BNN Asia's own voice. Our purpose is justice for the people who are targeted, so every alert names what happened, who was harmed and what the authorities must do.\n\nWHAT WE COVER\nCover a story only when it happened in one of the countries in the country list and it is one of these:\n1. A journalist, editor, photographer, camera operator, media worker, blogger, YouTuber, podcaster, cartoonist, writer or online activist was: arrested, detained, charged, sued, sentenced, jailed, abducted, disappeared, threatened, harassed, surveilled, attacked, injured or killed; or had a device, account, outlet or licence seized, blocked or suspended.\n2. A human rights defender, lawyer, student or civil-society activist faced the same because of peaceful activism, speech or protest.\n3. A serious human rights violation by state or powerful actors: enforced disappearance, torture or death in custody, extrajudicial killing, violent crackdown on peaceful protest, mass arbitrary arrest.\n4. A law, order or action that restricts free expression or information: internet or platform shutdowns, censorship, new cyber, defamation, \"fake news\" or security laws used against speech, bans on outlets or books.\nDo NOT cover: ordinary crime with no link to speech, media or rights; battlefield reporting unless media workers or civilians' rights are the subject; opinion or analysis pieces; announcements of reports or awards; events older than 7 days; anything outside the country list; anything we already published.\n\nACCURACY (never break these)\n- Use only facts found in the source text given to you. Never invent names, ages, dates, numbers, places, charges, quotes or motives.\n- If the source is unclear about a fact, leave it out.\n- Allegations stay allegations: write \"alleged\", \"accused of\", \"according to police\", \"local media reported\", \"his family said\".\n- Never state a motive as fact. If the source says a link to the person's work is suspected, say \"it is not yet known whether the attack was linked to his/her work\" or \"colleagues believe\".\n- Write dates in full (\"on November 22, 2026\"), never \"yesterday\" or \"on Monday\" alone.\n- Do not name or describe minors, or survivors of sexual violence.\n- Do not name media outlets or websites as sources, and add no source links or \"Source:\" line. Generic attribution is allowed and required for claims: \"local media reported\", \"police said\", \"rights groups said\", \"the family said\".\n- Never copy more than 8 consecutive words from the source. Rewrite everything in BNN Asia's own words and structure.\n- BNN Asia statements are attributed to \"BNN Asia\" only — never to a named person or a job title. Do not invent statements from anyone else.\n\nSTYLE\n- English, British spelling (programme, organisation, defence).\n- Calm, factual, human. No sensational adjectives, no exclamation marks, no emojis in the article.\n- Title format: \"COUNTRY: Short factual headline\" in title case, max 90 characters, e.g. \"PHILIPPINES: Broadcaster Adrian Loterte Shot Dead\". For a killing, abduction, enforced disappearance or new imprisonment you may use \"COUNTRY: ALERT | Headline\".\n- Body: 4 to 6 paragraphs, 250 to 420 words, each paragraph wrapped in <p>…</p>, no other HTML.\n  1. Lead: who (name, role, outlet if the person works for one), what happened, where (town/district and country), when.\n  2. Details: what is known about how it happened, charges, the law used, the authority involved, current status.\n  3. Context: the person's work or the pattern behind the case (only from the source).\n  4. BNN Asia's call, starting \"BNN Asia calls on [country adjective/name] authorities to …\" — concrete demands that fit the case: release, drop charges, investigate swiftly, impartially and transparently, bring those responsible to justice, protect the family, restore access, repeal or amend the law.\n  5. Why it matters: one short paragraph on press freedom, the right to information or the end of impunity.\n  6. Always end with exactly: <p>BNN Asia promotes and defends press freedom, human rights and good governance, and the freedom to inform and be informed across Asia.</p>\n\nSOCIAL TEXT\n- lead_summary: 1–2 sentences (max 280 characters) that tell the story plainly, for Facebook and X.\n- card_title: max 70 characters, punchy and factual, no country name (the card shows the country separately).\n\nIMAGE BRIEF (for the illustration we generate ourselves)\n- Describe one symbolic, documentary-style photograph that fits the story: e.g. an empty newsroom chair, a microphone on a table, a press vest, a notebook and camera, a courthouse door, prison bars with light, a candle vigil, a phone showing no signal.\n- No real or identifiable people, no faces in close-up, no text, letters, numbers, logos, watermarks, flags of political parties, uniforms with insignia, blood, bodies, weapons pointed at people or graphic violence.\n- Mood: serious, cinematic, natural light, muted colours, 3:2 landscape.\n- image_alt: plain description of the illustration (max 125 characters). image_caption: \"Illustration: BNN Asia\".`;\nreturn [{ json: {\n  models: { fast: 'gpt-5-mini', writer: 'gpt-5', image: 'gpt-image-2' },\n  max_posts: 6,                 // most stories published per day\n  approval: 'auto',             // 'auto' = scheduled publishing, 'review' = saved as drafts for an editor\n  slots: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'],   // Dhaka time, one story per slot\n  wp_base: 'https://www.bnnasia.org',\n  lookback_hours: 48,\n  countries: {\"Afghanistan\": {\"slug\": \"afghanistan\", \"id\": 211}, \"Armenia\": {\"slug\": \"armenia\", \"id\": 212}, \"Azerbaijan\": {\"slug\": \"azerbaijan\", \"id\": 213}, \"Bahrain\": {\"slug\": \"bahrain\", \"id\": 214}, \"Bangladesh\": {\"slug\": \"bangladesh\", \"id\": 210}, \"Bhutan\": {\"slug\": \"bhutan\", \"id\": 215}, \"Brunei\": {\"slug\": \"brunei\", \"id\": 216}, \"Cambodia\": {\"slug\": \"cambodia\", \"id\": 217}, \"China\": {\"slug\": \"china\", \"id\": 218}, \"Cyprus\": {\"slug\": \"cyprus\", \"id\": 219}, \"Georgia\": {\"slug\": \"georgia\", \"id\": 220}, \"India\": {\"slug\": \"india\", \"id\": 221}, \"Indonesia\": {\"slug\": \"indonesia\", \"id\": 222}, \"Iran\": {\"slug\": \"iran\", \"id\": 223}, \"Iraq\": {\"slug\": \"iraq\", \"id\": 224}, \"Israel\": {\"slug\": \"israel\", \"id\": 225}, \"Japan\": {\"slug\": \"japan\", \"id\": 226}, \"Jordan\": {\"slug\": \"jordan\", \"id\": 227}, \"Kazakhstan\": {\"slug\": \"kazakhstan\", \"id\": 228}, \"Kuwait\": {\"slug\": \"kuwait\", \"id\": 229}, \"Kyrgyzstan\": {\"slug\": \"kyrgyzstan\", \"id\": 230}, \"Laos\": {\"slug\": \"laos\", \"id\": 231}, \"Lebanon\": {\"slug\": \"lebanon\", \"id\": 232}, \"Malaysia\": {\"slug\": \"malaysia\", \"id\": 233}, \"Maldives\": {\"slug\": \"maldives\", \"id\": 234}, \"Mongolia\": {\"slug\": \"mongolia\", \"id\": 235}, \"Myanmar\": {\"slug\": \"myanmar\", \"id\": 236}, \"Nepal\": {\"slug\": \"nepal\", \"id\": 237}, \"North Korea\": {\"slug\": \"north-korea\", \"id\": 238}, \"Oman\": {\"slug\": \"oman\", \"id\": 239}, \"Pakistan\": {\"slug\": \"pakistan\", \"id\": 240}, \"Palestine\": {\"slug\": \"palestine\", \"id\": 241}, \"Philippines\": {\"slug\": \"philippines\", \"id\": 242}, \"Qatar\": {\"slug\": \"qatar\", \"id\": 243}, \"Saudi Arabia\": {\"slug\": \"saudi-arabia\", \"id\": 244}, \"Singapore\": {\"slug\": \"singapore\", \"id\": 245}, \"South Korea\": {\"slug\": \"south-korea\", \"id\": 246}, \"Sri Lanka\": {\"slug\": \"sri-lanka\", \"id\": 247}, \"Syria\": {\"slug\": \"syria\", \"id\": 248}, \"Taiwan\": {\"slug\": \"taiwan\", \"id\": 249}, \"Tajikistan\": {\"slug\": \"tajikistan\", \"id\": 250}, \"Thailand\": {\"slug\": \"thailand\", \"id\": 251}, \"Timor-Leste\": {\"slug\": \"timor-leste\", \"id\": 252}, \"Turkey\": {\"slug\": \"turkey\", \"id\": 253}, \"Turkmenistan\": {\"slug\": \"turkmenistan\", \"id\": 254}, \"United Arab Emirates\": {\"slug\": \"uae\", \"id\": 255}, \"Uzbekistan\": {\"slug\": \"uzbekistan\", \"id\": 256}, \"Vietnam\": {\"slug\": \"vietnam\", \"id\": 257}, \"Yemen\": {\"slug\": \"yemen\", \"id\": 258}},\n  rulebook: RULEBOOK\n}}];\n"
+      },
+      "id": "46c5f9e0-0f15-4232-80df-e559e157bfb5",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = [\"(journalist OR reporter OR editor OR photojournalist OR \\\"media worker\\\" OR newspaper) (arrested OR detained OR jailed OR sentenced OR charged OR abducted OR attacked OR assaulted OR killed OR \\\"shot dead\\\" OR threatened OR harassed)\", \"(blogger OR activist OR \\\"human rights defender\\\" OR youtuber OR cartoonist OR \\\"rights lawyer\\\" OR dissident) (arrested OR detained OR jailed OR abducted OR disappeared OR sentenced OR tortured)\", \"(\\\"internet shutdown\\\" OR \\\"press freedom\\\" OR \\\"media crackdown\\\" OR \\\"enforced disappearance\\\" OR \\\"custodial death\\\" OR \\\"extrajudicial killing\\\" OR \\\"cyber security act\\\" OR \\\"digital security act\\\" OR \\\"sedition charges\\\" OR \\\"blasphemy charges\\\")\"];\nconst gdelt = q.map(query => ({\n  kind: 'gdelt', source: 'GDELT',\n  url: 'https://api.gdeltproject.org/api/v2/doc/doc?format=json&mode=artlist&sort=datedesc&maxrecords=250&timespan=2d&query=' +\n       encodeURIComponent(query + ' sourcelang:english')\n}));\nconst rss = [\n  ['CPJ', 'https://cpj.org/feed/'],\n  ['Amnesty', 'https://www.amnesty.org/en/feed/'],\n  ['Global Voices Advox', 'https://advox.globalvoices.org/feed/'],\n  ['IFEX', 'https://ifex.org/feed/'],\n  ['Article 19', 'https://www.article19.org/feed/'],\n  ['Front Line Defenders', 'https://www.frontlinedefenders.org/en/rss.xml'],\n].map(([source, url]) => ({ kind: 'rss', source, url }));\nreturn [...gdelt, ...rss].map(json => ({ json }));\n"
+      },
+      "id": "d7897694-045f-4cc7-867c-c5baf05cb6aa",
+      "name": "Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; BNNAsiaMonitor/1.0; +https://www.bnnasia.org)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 40000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "a6d9e872-cc9d-4b73-95d4-ca4144831a46",
+      "name": "Fetch feeds",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction decode(s) {\n  return String(s || '')\n    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(+n))\n    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&quot;/g, '\"').replace(/&apos;|&#039;/g, \"'\").replace(/&lt;/g, '<').replace(/&gt;/g, '>')\n    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')\n    .replace(/\\s+/g, ' ').trim();\n}\n\nconst sources = $('Sources').all();\nconst out = [];\nfunction gdeltDate(s) { // 20261124T081500Z\n  const m = String(s || '').match(/^(\\d{4})(\\d\\d)(\\d\\d)T(\\d\\d)(\\d\\d)(\\d\\d)Z$/);\n  return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : Date.now();\n}\n$input.all().forEach((item, i) => {\n  const src = (sources[i] || {}).json || {};\n  const body = typeof item.json.data === 'string' ? item.json.data : '';\n  if (!body) return;\n  if (src.kind === 'gdelt') {\n    let j; try { j = JSON.parse(body); } catch (e) { return; }\n    for (const a of (j.articles || [])) {\n      out.push({ title: decode(a.title), link: a.url, published: gdeltDate(a.seendate), summary: '',\n                 source: a.domain || 'news', kind: 'news', image: a.socialimage || '' });\n    }\n    return;\n  }\n  const blocks = body.match(/<item[\\s>][\\s\\S]*?<\\/item>/gi) || body.match(/<entry[\\s>][\\s\\S]*?<\\/entry>/gi) || [];\n  for (const x of blocks) {\n    const tag = t => { const m = x.match(new RegExp('<' + t + '(?:\\\\s[^>]*)?>([\\\\s\\\\S]*?)</' + t + '>', 'i')); return m ? m[1] : ''; };\n    let link = decode(tag('link'));\n    if (!link) { const m = x.match(/<link[^>]*href=\"([^\"]+)\"/i); link = m ? m[1] : ''; }\n    const date = Date.parse(decode(tag('pubDate') || tag('published') || tag('updated') || tag('dc:date'))) || Date.now();\n    out.push({ title: decode(tag('title')), link, published: date,\n               summary: decode(tag('description') || tag('summary') || tag('content:encoded')).slice(0, 700),\n               source: src.source, kind: 'ngo', image: '' });\n  }\n});\nreturn out.filter(a => a.title && a.link).map(json => ({ json }));\n"
+      },
+      "id": "2005080c-4ee9-4366-82cd-19f3faf4b1d5",
+      "name": "Parse feeds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/country_news",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "40"
+            },
+            {
+              "name": "_fields",
+              "value": "id,title,date"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f4f4bc16-47d8-4f82-a4ed-70a3114b03e5",
+      "name": "Recent BNN posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        100
+      ],
+      "onError": "continueRegularOutput",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst cfg = $('Config').first().json;\nconst st = $getWorkflowStaticData('global');\nst.seen = st.seen || {};\nconst now = Date.now();\nfor (const k of Object.keys(st.seen)) if (now - st.seen[k] > 30 * 864e5) delete st.seen[k];\n\n// Country hints: names, demonyms and well-known places. Georgia needs Georgian/Tbilisi (not the US state).\nconst HINTS = {\n  Afghanistan: 'afghan|kabul|taliban', Armenia: 'armenia|yerevan', Azerbaijan: 'azerbaijan|azeri|baku',\n  Bahrain: 'bahrain', Bangladesh: 'bangladesh|dhaka|chattogram|chittagong', Bhutan: 'bhutan', Brunei: 'brunei',\n  Cambodia: 'cambodia|phnom penh', China: 'china|chinese|beijing|hong kong|xinjiang|uyghur|tibet', Cyprus: 'cyprus|cypriot',\n  Georgia: 'georgian|tbilisi', India: 'india|indian|delhi|mumbai|kashmir|manipur', Indonesia: 'indonesia|jakarta|papua',\n  Iran: 'iran|tehran', Iraq: 'iraq|baghdad|kurdistan region', Israel: 'israel', Japan: 'japan|tokyo', Jordan: 'jordan|amman',\n  Kazakhstan: 'kazakh|astana|almaty', Kuwait: 'kuwait', Kyrgyzstan: 'kyrgyz|bishkek', Laos: 'laos|lao |vientiane',\n  Lebanon: 'leban|beirut', Malaysia: 'malaysia|kuala lumpur', Maldives: 'maldiv', Mongolia: 'mongolia|ulaanbaatar',\n  Myanmar: 'myanmar|burma|burmese|yangon|junta', Nepal: 'nepal|kathmandu', 'North Korea': 'north korea|pyongyang',\n  Oman: 'oman|muscat', Pakistan: 'pakistan|islamabad|karachi|lahore|balochistan|peshawar', Palestine: 'palestin|gaza|west bank',\n  Philippines: 'philippine|filipino|manila|mindanao', Qatar: 'qatar|doha', 'Saudi Arabia': 'saudi|riyadh',\n  Singapore: 'singapore', 'South Korea': 'south korea|seoul', 'Sri Lanka': 'sri lanka|colombo|tamil', Syria: 'syria|damascus',\n  Taiwan: 'taiwan|taipei', Tajikistan: 'tajik|dushanbe', Thailand: 'thailand|thai |bangkok', 'Timor-Leste': 'timor',\n  Turkey: 'turkey|türkiye|turkish|istanbul|ankara', Turkmenistan: 'turkmen', 'United Arab Emirates': 'emirat|uae|dubai|abu dhabi',\n  Uzbekistan: 'uzbek|tashkent', Vietnam: 'vietnam|hanoi|ho chi minh', Yemen: 'yemen|sanaa|houthi',\n};\nconst HINT_RE = Object.entries(HINTS).map(([c, re]) => [c, new RegExp('\\\\b(' + re + ')', 'i')]);\nconst TOPIC = /(journalist|reporter|editor|correspondent|photograph|camera|media|press|newspaper|broadcaster|blogger|youtuber|podcast|cartoonist|writer|activist|human rights|rights defender|dissident|lawyer|internet|shutdown|censor|cyber|sedition|blasphemy|disappear|torture|custod|extrajudicial|protest)/i;\n\nconst items = $('Parse feeds').all().map(i => i.json)\n  .filter(a => now - a.published < cfg.lookback_hours * 3600e3)\n  .map(a => {\n    const text = a.title + ' ' + a.summary;\n    const countries = HINT_RE.filter(([, re]) => re.test(text)).map(([c]) => c);\n    return { ...a, countries };\n  })\n  .filter(a => a.countries.length && TOPIC.test(a.title + ' ' + a.summary));\n\nconst key = s => String(s).toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\\s+/).filter(w => w.length > 2).slice(0, 9).join(' ');\nconst seenNow = new Set();\nconst fresh = [];\nfor (const a of items.sort((x, y) => (y.kind === 'ngo') - (x.kind === 'ngo') || y.published - x.published)) {\n  const k = key(a.title);\n  const lk = a.link.replace(/[?#].*$/, '');\n  if (seenNow.has(k) || seenNow.has(lk) || st.seen[k] || st.seen[lk]) continue;\n  seenNow.add(k); seenNow.add(lk);\n  fresh.push({ ...a, _key: k, _lk: lk });\n}\nconst candidates = fresh.slice(0, 70).map((a, i) => ({ id: i + 1, ...a }));\nconst recent = $('Recent BNN posts').all().map(i => i.json && i.json.title && (i.json.title.rendered || i.json.title)).filter(Boolean);\nif (!candidates.length) return [];\nreturn [{ json: { candidates, recent } }];\n"
+      },
+      "id": "5fded8d6-08cf-46fc-b127-f6023d7046e4",
+      "name": "Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: $('Config').first().json.models.fast,\n  reasoning_effort: 'low',\n  response_format: { type: 'json_object' },\n  messages: [\n    { role: 'system', content: 'You are the desk editor of BNN Asia, a press-freedom and human-rights organisation. Select which candidate news items deserve a BNN Asia country alert today.\\n\\nRULES FROM THE BNN ASIA RULEBOOK:\\n' + $('Config').first().json.rulebook + '\\n\\nTASK: Group candidates that describe the same incident. Return only incidents that fit WHAT WE COVER, happened in one of these countries: ' + Object.keys($('Config').first().json.countries).join(', ') + ', and are not already covered by a recent BNN Asia post. Rank by severity (killing > enforced disappearance or abduction > imprisonment or sentence > arrest or detention > physical attack > charges or lawsuit > threats or harassment > restrictive law or shutdown) and by how many independent items report it. Return at most ' + $('Config').first().json.max_posts + ' incidents.\\n\\nReply with JSON only: {\"stories\":[{\"candidate_ids\":[numbers, best source first],\"country\":\"exact country name from the list\",\"type\":\"killing|abduction|imprisonment|arrest|attack|legal_harassment|threat|law_or_shutdown|other_violation\",\"victim\":\"who\",\"priority\":1-5,\"reason\":\"one sentence\"}]}. Use {\"stories\":[]} when nothing qualifies.' },\n    { role: 'user', content: JSON.stringify({ today: new Date().toISOString().slice(0, 10), recent_bnn_posts: $json.recent, candidates: $json.candidates.map(c => ({ id: c.id, title: c.title, summary: (c.summary || '').slice(0, 300), source: c.source, kind: c.kind, published: new Date(c.published).toISOString().slice(0, 16), country_hints: c.countries })) }) }\n  ]\n}) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "3d6c690d-8a35-4ad2-9260-6cf9be55891f",
+      "name": "Triage (AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        100
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst cfg = $('Config').first().json;\nconst st = $getWorkflowStaticData('global');\nst.seen = st.seen || {};\nconst cands = $('Candidates').first().json.candidates;\nfor (const c of cands) { st.seen[c._key] = Date.now(); st.seen[c._lk] = Date.now(); }  // never triage the same item twice\nlet parsed = {};\ntry { parsed = JSON.parse($json.choices[0].message.content); } catch (e) { return []; }\nconst byId = Object.fromEntries(cands.map(c => [c.id, c]));\nconst out = [];\nfor (const s of (parsed.stories || []).slice(0, cfg.max_posts)) {\n  if (!cfg.countries[s.country]) continue;\n  const items = (s.candidate_ids || []).map(id => byId[id]).filter(Boolean);\n  if (!items.length) continue;\n  out.push({ json: {\n    country: s.country, type: s.type, victim: s.victim, priority: s.priority, reason: s.reason,\n    link: items[0].link, source_title: items[0].title,\n    other_reports: items.slice(1, 5).map(i => ({ title: i.title, summary: (i.summary || '').slice(0, 500) })),\n    first_summary: items[0].summary || '',\n    published: new Date(items[0].published).toISOString(),\n    trusted: items.some(i => i.kind === 'ngo') || items.length >= 2,\n  }});\n}\nreturn out;\n"
+      },
+      "id": "e42cd251-5667-46f1-9dfb-84d40b56d9dc",
+      "name": "Pick stories",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.link }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "8a3354b2-16c2-49d8-9991-fdfcb5d15bdf",
+      "name": "Fetch article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction decode(s) {\n  return String(s || '')\n    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(+n))\n    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&quot;/g, '\"').replace(/&apos;|&#039;/g, \"'\").replace(/&lt;/g, '<').replace(/&gt;/g, '>')\n    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')\n    .replace(/\\s+/g, ' ').trim();\n}\n\nconst story = $('Pick stories').item.json;\nconst html = typeof $json.data === 'string' ? $json.data : '';\nconst cleaned = html.replace(/<script[\\s\\S]*?<\\/script>/gi, ' ').replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<(nav|footer|header|aside|form)[\\s\\S]*?<\\/\\1>/gi, ' ');\nconst paras = (cleaned.match(/<p[\\s>][\\s\\S]*?<\\/p>/gi) || []).map(decode).filter(p => p.length > 60);\nlet text = paras.join('\\n\\n').slice(0, 9000);\nif (text.length < 400) {\n  text = [story.source_title, story.first_summary, ...story.other_reports.map(r => r.title + '. ' + r.summary)].join('\\n\\n');\n}\nreturn { json: { ...story, source_text: text } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "85a62dcb-4f12-4c64-8a14-4fe4e0757cd3",
+      "name": "Extract text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: $('Config').first().json.models.writer,\n  reasoning_effort: 'medium',\n  response_format: { type: 'json_object' },\n  messages: [\n    { role: 'system', content: $('Config').first().json.rulebook + '\\n\\nCOUNTRY LIST: ' + Object.keys($('Config').first().json.countries).join(', ') + '\\n\\nWrite one BNN Asia country alert from the material the user gives you. Reply with JSON only, keys: {\"reject\":false,\"reject_reason\":\"\",\"country\":\"exact name from the country list\",\"title\":\"\",\"body_html\":\"\",\"lead_summary\":\"\",\"card_title\":\"\",\"seo_title\":\"max 60 characters\",\"seo_description\":\"max 155 characters\",\"focus_keyword\":\"\",\"slug\":\"lowercase-words-with-hyphens, max 8 words\",\"image_prompt\":\"\",\"image_alt\":\"\"}. Set reject:true with a reason if the material does not meet the rulebook.' },\n    { role: 'user', content: JSON.stringify({ today: new Date().toISOString().slice(0, 10), country_hint: $json.country, incident_type: $json.type, victim_hint: $json.victim, first_reported: $json.published, source_headline: $json.source_title, source_text: $json.source_text, other_reports: $json.other_reports }) }\n  ]\n}) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "64cf8986-36f6-4cca-8232-2d2d8ca47281",
+      "name": "Write (AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        100
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: $('Config').first().json.models.fast,\n  reasoning_effort: 'medium',\n  response_format: { type: 'json_object' },\n  messages: [\n    { role: 'system', content: 'You are the fact checker of BNN Asia. Compare the DRAFT with the SOURCE material and with the rulebook below. Check: every name, number, date, place, charge and quote in the draft is supported by the source; nothing is invented; allegations are attributed; no motive is stated as fact; no media outlet or website is named and there is no source link; no run of more than 8 words is copied from the source; minors and survivors of sexual violence are not named; the title follows the format; the last paragraph is the standard BNN Asia paragraph. If problems can be fixed by deleting or rewording, fix them and return verdict \"fix\" with the corrected title and body_html. If the story does not meet the rulebook at all, return \"reject\".\\n\\nRULEBOOK:\\n' + $('Config').first().json.rulebook + '\\n\\nReply with JSON only: {\"verdict\":\"pass|fix|reject\",\"problems\":[\"...\"],\"title\":\"\",\"body_html\":\"\"}' },\n    { role: 'user', content: JSON.stringify({ SOURCE: $('Extract text').item.json.source_text, OTHER_REPORTS: $('Extract text').item.json.other_reports, DRAFT: (() => { try { return JSON.parse($json.choices[0].message.content); } catch (e) { return {}; } })() }) }\n  ]\n}) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "21654241-6fab-4130-9ae8-bf8149eb54d1",
+      "name": "Check (AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        100
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst cfg = $('Config').first().json;\nconst ENDING = '<p>BNN Asia promotes and defends press freedom, human rights and good governance, and the freedom to inform and be informed across Asia.</p>';\nconst out = [];\nconst checks = $input.all();\nconst drafts = $('Write (AI)').all();\nconst facts = $('Extract text').all();\nconst dhakaToday = new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 10);\nlet slot = 0;\nchecks.forEach((item, i) => {\n  let d = {}, q = {};\n  try { d = JSON.parse(drafts[i].json.choices[0].message.content); } catch (e) { return; }\n  try { q = JSON.parse(item.json.choices[0].message.content); } catch (e) { q = { verdict: 'reject', problems: ['checker failed'] }; }\n  if (d.reject || q.verdict === 'reject') return;\n  if (q.verdict === 'fix') { if (q.title) d.title = q.title; if (q.body_html) d.body_html = q.body_html; }\n  const country = cfg.countries[d.country] ? d.country : facts[i].json.country;\n  const term = cfg.countries[country];\n  if (!term || !d.title || !d.body_html) return;\n  let body = String(d.body_html).replace(/<(?!\\/?p\\b)[^>]*>/gi, '').trim();\n  if (!body.includes('freedom to inform and be informed')) body += '\\n' + ENDING;\n  body = body.replace(/<\\/p>\\s*<p>/g, '</p>\\n\\n<p>');\n  // Schedule: next free slot today (Dhaka), otherwise a few minutes from now.\n  const hhmm = cfg.slots[slot++] || cfg.slots[cfg.slots.length - 1];\n  let when = Date.parse(dhakaToday + 'T' + hhmm + ':00+06:00');\n  if (when < Date.now() + 5 * 60e3) when = Date.now() + (10 + 15 * i) * 60e3;\n  const scheduled = cfg.approval === 'auto';\n  const slug = String(d.slug || d.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70);\n  out.push({ json: {\n    post: { title: d.title.trim(), content: body, status: scheduled ? 'future' : 'draft',\n            date_gmt: new Date(when).toISOString().slice(0, 19), slug, country_select: [term.id] },\n    seo: { rank_math_title: d.seo_title || d.title, rank_math_description: d.seo_description || d.lead_summary || '', rank_math_focus_keyword: d.focus_keyword || '' },\n    image: { prompt: d.image_prompt || ('Symbolic documentary photograph about press freedom in ' + country), alt: d.image_alt || ('Illustration for a BNN Asia alert on ' + country), caption: 'Illustration: BNN Asia' },\n    country, slug, checker_notes: q.problems || [],\n  }});\n});\nreturn out;\n"
+      },
+      "id": "50940c47-df50-4804-9322-1659b3e64966",
+      "name": "Approve",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: $('Config').first().json.models.image,\n  prompt: $json.image.prompt + ' Photorealistic documentary photograph, natural light, muted colours, serious mood, shallow depth of field, landscape 3:2. No people faces, no text, no letters, no numbers, no logos, no watermark, no flags, no blood, no graphic violence.',\n  size: '1536x1024',\n  quality: 'medium',\n  output_format: 'jpeg',\n  n: 1\n}) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "2bd6c331-6c7c-4cfe-937e-72b7f361962d",
+      "name": "Make image (AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3080,
+        100
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst meta = $('Approve').item.json;\nconst b64 = $json.data && $json.data[0] && $json.data[0].b64_json;\nif (!b64) return { json: { ...meta, image_error: $json.error ? JSON.stringify($json.error).slice(0, 300) : 'no image' } };\nreturn { json: meta, binary: { image: { data: b64, mimeType: 'image/jpeg', fileName: meta.slug + '.jpg', fileExtension: 'jpg' } } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "90191a6e-b56c-475f-9819-69e0f7b5e492",
+      "name": "Image file",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "=attachment; filename=\"{{ $json.slug }}.jpg\""
+            },
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "image",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "15dd25f3-6da0-4f6a-8b11-e4f28996864f",
+      "name": "Upload image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3520,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/media/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alt_text: $('Image file').item.json.image.alt, caption: $('Image file').item.json.image.caption, title: $('Image file').item.json.post.title, description: $('Image file').item.json.image.alt }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "61739521-34e3-4608-9fb4-8b325750b5e9",
+      "name": "Image details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3740,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/country_news",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(Object.assign({}, $('Image file').item.json.post, { featured_media: ($('Upload image').item.json && $('Upload image').item.json.id) || 0 })) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "708862a7-cbf8-4140-b9e8-f74c5b8cbb22",
+      "name": "Create post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3960,
+        100
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.wp_base }}/wp-json/rankmath/v1/updateMeta",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ objectID: $json.id, objectType: 'post', meta: $('Image file').item.json.seo }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4f9142e9-98d0-4056-95f9-3f395799b8c2",
+      "name": "SEO (Rank Math)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4180,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst rows = $('Create post').all().map(i => i.json).filter(p => p && p.id);\nreturn [{ json: { published_or_scheduled: rows.length, posts: rows.map(p => ({ id: p.id, status: p.status, date: p.date, title: p.title && (p.title.raw || p.title.rendered), link: p.link })) } }];\n"
+      },
+      "id": "58dd93ca-5392-4593-a9d3-dd75de30d619",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Every day 08:00": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now (test)": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch feeds": {
+      "main": [
+        [
+          {
+            "node": "Parse feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse feeds": {
+      "main": [
+        [
+          {
+            "node": "Recent BNN posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recent BNN posts": {
+      "main": [
+        [
+          {
+            "node": "Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidates": {
+      "main": [
+        [
+          {
+            "node": "Triage (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage (AI)": {
+      "main": [
+        [
+          {
+            "node": "Pick stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick stories": {
+      "main": [
+        [
+          {
+            "node": "Fetch article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch article": {
+      "main": [
+        [
+          {
+            "node": "Extract text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract text": {
+      "main": [
+        [
+          {
+            "node": "Write (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write (AI)": {
+      "main": [
+        [
+          {
+            "node": "Check (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check (AI)": {
+      "main": [
+        [
+          {
+            "node": "Approve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approve": {
+      "main": [
+        [
+          {
+            "node": "Make image (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make image (AI)": {
+      "main": [
+        [
+          {
+            "node": "Image file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image file": {
+      "main": [
+        [
+          {
+            "node": "Upload image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload image": {
+      "main": [
+        [
+          {
+            "node": "Image details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image details": {
+      "main": [
+        [
+          {
+            "node": "Create post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create post": {
+      "main": [
+        [
+          {
+            "node": "SEO (Rank Math)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO (Rank Math)": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dhaka",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

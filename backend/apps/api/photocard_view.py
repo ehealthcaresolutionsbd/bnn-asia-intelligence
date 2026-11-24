@@ -55,4 +55,5 @@ def photocard(request):
     resp = HttpResponse(png, content_type="image/png")
     resp["Cache-Control"] = "public, max-age=86400"
     resp["Content-Disposition"] = 'inline; filename="bnn-asia-card.png"'
+    resp["Access-Control-Allow-Origin"] = "*"  # the website's "Download PhotoCard" button fetches it cross-origin
     return resp

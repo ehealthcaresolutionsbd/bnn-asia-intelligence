@@ -1,0 +1,448 @@
+{
+  "name": "BNN Asia · Social Publisher (every 15 min)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "2ad1eeab-8a6d-4453-a450-dd3c89ec462a",
+      "name": "Every 15 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "90064888-6093-4635-b6b1-f3ef8802f2bf",
+      "name": "Run now (test)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== BNN Asia social settings: edit here =====\nreturn [{ json: {\n  wp_base: 'https://www.bnnasia.org',\n  card_url: 'https://api.bnnasia.org/api/v1/photocard.png',\n  facebook_page_id: 'PUT_FACEBOOK_PAGE_ID_HERE',\n  graph_version: 'v23.0',\n  max_per_run: 2,\n  flags: {\"Afghanistan\": \"🇦🇫\", \"Armenia\": \"🇦🇲\", \"Azerbaijan\": \"🇦🇿\", \"Bahrain\": \"🇧🇭\", \"Bangladesh\": \"🇧🇩\", \"Bhutan\": \"🇧🇹\", \"Brunei\": \"🇧🇳\", \"Cambodia\": \"🇰🇭\", \"China\": \"🇨🇳\", \"Cyprus\": \"🇨🇾\", \"Georgia\": \"🇬🇪\", \"India\": \"🇮🇳\", \"Indonesia\": \"🇮🇩\", \"Iran\": \"🇮🇷\", \"Iraq\": \"🇮🇶\", \"Israel\": \"🇮🇱\", \"Japan\": \"🇯🇵\", \"Jordan\": \"🇯🇴\", \"Kazakhstan\": \"🇰🇿\", \"Kuwait\": \"🇰🇼\", \"Kyrgyzstan\": \"🇰🇬\", \"Laos\": \"🇱🇦\", \"Lebanon\": \"🇱🇧\", \"Malaysia\": \"🇲🇾\", \"Maldives\": \"🇲🇻\", \"Mongolia\": \"🇲🇳\", \"Myanmar\": \"🇲🇲\", \"Nepal\": \"🇳🇵\", \"North Korea\": \"🇰🇵\", \"Oman\": \"🇴🇲\", \"Pakistan\": \"🇵🇰\", \"Palestine\": \"🇵🇸\", \"Philippines\": \"🇵🇭\", \"Qatar\": \"🇶🇦\", \"Saudi Arabia\": \"🇸🇦\", \"Singapore\": \"🇸🇬\", \"South Korea\": \"🇰🇷\", \"Sri Lanka\": \"🇱🇰\", \"Syria\": \"🇸🇾\", \"Taiwan\": \"🇹🇼\", \"Tajikistan\": \"🇹🇯\", \"Thailand\": \"🇹🇭\", \"Timor-Leste\": \"🇹🇱\", \"Turkey\": \"🇹🇷\", \"Turkmenistan\": \"🇹🇲\", \"United Arab Emirates\": \"🇦🇪\", \"Uzbekistan\": \"🇺🇿\", \"Vietnam\": \"🇻🇳\", \"Yemen\": \"🇾🇪\"},\n  hashtags: ['#BNNAsia', '#PressFreedom', '#HumanRights'],\n}}];\n"
+      },
+      "id": "f04c8dfc-e215-48c1-8839-ff4d6339df48",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.wp_base }}/wp-json/wp/v2/country_news",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "10"
+            },
+            {
+              "name": "_embed",
+              "value": "wp:featuredmedia,wp:term"
+            },
+            {
+              "name": "orderby",
+              "value": "date"
+            },
+            {
+              "name": "order",
+              "value": "desc"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "c1591808-5ada-406d-bdce-d441ba99484b",
+      "name": "Latest posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        100
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst SOFTEN = {\"murdered\": \"mur-dered\", \"murder\": \"mur-der\", \"murders\": \"mur-ders\", \"killed\": \"k!lled\", \"killing\": \"k!lling\", \"killings\": \"k!llings\", \"kill\": \"k!ll\", \"dead\": \"de@d\", \"death\": \"de@th\", \"deaths\": \"de@ths\", \"died\": \"d!ed\", \"shot\": \"sh0t\", \"shooting\": \"sh0oting\", \"gunmen\": \"gunm3n\", \"gun\": \"g*n\", \"stabbed\": \"st@bbed\", \"beaten\": \"be@ten\", \"torture\": \"tor-ture\", \"tortured\": \"tor-tured\", \"rape\": \"r@pe\", \"raped\": \"r@ped\", \"bomb\": \"b0mb\", \"bombing\": \"b0mbing\", \"blood\": \"bl00d\", \"suicide\": \"su!cide\", \"massacre\": \"mass@cre\", \"executed\": \"exe-cuted\", \"execution\": \"exe-cution\", \"hanged\": \"h@nged\", \"lynched\": \"lyn-ched\", \"lynching\": \"lyn-ching\", \"violence\": \"vi0lence\", \"violent\": \"vi0lent\", \"assault\": \"as-sault\", \"assaulted\": \"as-saulted\", \"attack\": \"att@ck\", \"attacked\": \"att@cked\", \"corpse\": \"c0rpse\", \"body\": \"b0dy\"};\nfunction soften(text) {\n  return String(text || '').replace(/[A-Za-z]+/g, w => {\n    const r = SOFTEN[w.toLowerCase()];\n    if (!r) return w;\n    if (w === w.toUpperCase()) return r.toUpperCase();\n    if (w[0] === w[0].toUpperCase()) return r[0].toUpperCase() + r.slice(1);\n    return r;\n  });\n}\n\nfunction decode(s) {\n  return String(s || '')\n    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(+n))\n    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&quot;/g, '\"').replace(/&apos;|&#039;/g, \"'\").replace(/&lt;/g, '<').replace(/&gt;/g, '>')\n    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')\n    .replace(/\\s+/g, ' ').trim();\n}\n\nconst cfg = $('Config').first().json;\nconst st = $getWorkflowStaticData('global');\nst.shared = st.shared || {};\nconst posts = $('Latest posts').all().map(i => i.json).filter(p => p && p.id);\nif (!st.initialised) {               // first run: everything already on the site counts as shared\n  posts.forEach(p => { st.shared[p.id] = Date.now(); });\n  st.initialised = true;\n  return [];\n}\nfor (const k of Object.keys(st.shared)) if (Date.now() - st.shared[k] > 60 * 864e5) delete st.shared[k];\nconst fresh = posts\n  .filter(p => !st.shared[p.id] && Date.now() - Date.parse(p.date_gmt + 'Z') < 24 * 3600e3)\n  .sort((a, b) => Date.parse(a.date_gmt) - Date.parse(b.date_gmt))\n  .slice(0, cfg.max_per_run);\nreturn fresh.map(p => {\n  const terms = ((p._embedded || {})['wp:term'] || []).flat();\n  const countryTerm = terms.find(t => t.taxonomy === 'country_select');\n  const country = countryTerm ? decode(countryTerm.name) : '';\n  const media = ((p._embedded || {})['wp:featuredmedia'] || [])[0] || {};\n  const sizes = (media.media_details || {}).sizes || {};\n  const image = (sizes.large || sizes.full || {}).source_url || media.source_url || '';\n  const title = decode(p.title.rendered);\n  const headline = title.replace(/^[^:]{2,40}:\\s*/, '').replace(/^ALERT\\s*\\|\\s*/i, '').trim();\n  const firstPara = decode(((p.content.rendered || '').match(/<p[\\s>][\\s\\S]*?<\\/p>/i) || [''])[0]);\n  const lead = firstPara.length > 300 ? firstPara.slice(0, 297).replace(/\\s\\S*$/, '') + '…' : firstPara;\n  const flag = cfg.flags[country] || '';\n  const tag = '#' + country.replace(/[^A-Za-z]/g, '');\n  const tags = [...cfg.hashtags, country ? tag : ''].filter(Boolean).join(' ');\n  const fb = soften(`${flag} ${country.toUpperCase()} | ${headline}\\n\\n${lead}\\n\\n📌 Full story: link in the first comment.\\n\\n${tags}`).trim();\n  let xBody = soften(`${flag} ${country.toUpperCase()}: ${headline}`);\n  const xTags = ' ' + tags;\n  const room = 280 - xBody.length - xTags.length - 4;\n  if (room > 40) xBody += '\\n\\n' + (soften(lead).length > room ? soften(lead).slice(0, room - 1).replace(/\\s\\S*$/, '') + '…' : soften(lead));\n  return { json: {\n    id: p.id, link: p.link, country, image,\n    card_title: soften(headline), fb_caption: fb, x_text: (xBody + xTags).slice(0, 280),\n  }};\n});\n"
+      },
+      "id": "e663329a-f12c-4c13-b963-bfd6d239ebee",
+      "name": "Select new posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Config').first().json.card_url }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image",
+              "value": "={{ $json.image }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.card_title }}"
+            },
+            {
+              "name": "country",
+              "value": "={{ $json.country }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 90000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "card"
+            }
+          }
+        }
+      },
+      "id": "0dce223b-7698-47e0-9406-855092d469c1",
+      "name": "Photocard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        100
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{ $('Config').first().json.graph_version }}/{{ $('Config').first().json.facebook_page_id }}/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "source",
+              "inputDataFieldName": "card"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Select new posts').item.json.fb_caption }}"
+            },
+            {
+              "name": "published",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "0f9a6cbd-1d7a-430b-b600-64e91087e4bb",
+      "name": "Facebook photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{ $('Config').first().json.graph_version }}/{{ $json.post_id || $json.id }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ 'Read the full story: ' + $('Select new posts').item.json.link }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "8d239561-b9ad-45f2-b80b-75da2cdc83d8",
+      "name": "Facebook link comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.x.com/2/media/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "media",
+              "inputDataFieldName": "card"
+            },
+            {
+              "name": "media_category",
+              "value": "tweet_image"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "2104c84b-b070-4e46-9a14-56314a3f4b35",
+      "name": "X upload image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        220
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.x.com/2/tweets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $('Select new posts').item.json.x_text, media: { media_ids: [String(($json.data && $json.data.id) || $json.media_id_string || '')] } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "64dca038-125d-4b4c-934a-5f96ad76b76d",
+      "name": "X post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        220
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.x.com/2/tweets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: 'Full story: ' + $('Select new posts').item.json.link, reply: { in_reply_to_tweet_id: $json.data && $json.data.id } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "2206ee92-1a05-4968-9695-2706e65844be",
+      "name": "X link reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        220
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst st = $getWorkflowStaticData('global');\nst.shared = st.shared || {};\nfor (const item of $('Select new posts').all()) st.shared[item.json.id] = Date.now();\nreturn [{ json: { shared: $('Select new posts').all().map(i => i.json.link) } }];\n"
+      },
+      "id": "b0088e53-a364-41a2-a5e1-d8b14e291e3d",
+      "name": "Mark shared",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now (test)": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Latest posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Latest posts": {
+      "main": [
+        [
+          {
+            "node": "Select new posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select new posts": {
+      "main": [
+        [
+          {
+            "node": "Photocard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photocard": {
+      "main": [
+        [
+          {
+            "node": "Facebook photo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "X upload image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook photo": {
+      "main": [
+        [
+          {
+            "node": "Facebook link comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook link comment": {
+      "main": [
+        [
+          {
+            "node": "Mark shared",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X upload image": {
+      "main": [
+        [
+          {
+            "node": "X post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X post": {
+      "main": [
+        [
+          {
+            "node": "X link reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X link reply": {
+      "main": [
+        [
+          {
+            "node": "Mark shared",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dhaka",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
