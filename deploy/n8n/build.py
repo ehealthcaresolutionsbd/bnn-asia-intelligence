@@ -595,7 +595,7 @@ def build_b():
         chain("Every 15 minutes", "Config"), chain("Run now (test)", "Config"),
         chain("Config", "Latest posts", "Select new posts", "Photocard"),
         chain("Photocard", "Facebook photo", "Facebook link comment", "Mark shared"),
-        chain("Photocard", "X upload image", "X post", "X link reply", "Mark shared"),
+        chain("Photocard", "X upload image", "X post", "Mark shared")  # X link reply off: a post with a URL costs $0.20 on X,
     )
     return workflow("BNN Asia · Social Publisher (every 15 min)", nodes, conns)
 
