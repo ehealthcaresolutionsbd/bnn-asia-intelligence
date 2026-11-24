@@ -12,7 +12,7 @@
           ]
         }
       },
-      "id": "ff94d9c3-8ca4-4417-a945-4ba58eb7233d",
+      "id": "d2bd2abf-3d4d-4dc1-b046-8af2516356dc",
       "name": "Every 15 minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -23,7 +23,7 @@
     },
     {
       "parameters": {},
-      "id": "81490bab-77c8-4b22-a009-8a7648ad6054",
+      "id": "57442f81-b390-4b82-be6e-ed81066a9533",
       "name": "Run now (test)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -34,9 +34,9 @@
     },
     {
       "parameters": {
-        "jsCode": "// ===== BNN Asia social settings: edit here =====\nreturn [{ json: {\n  wp_base: 'https://www.bnnasia.org',\n  card_url: 'https://api.bnnasia.org/api/v1/photocard.png',\n  facebook_page_id: 'PUT_FACEBOOK_PAGE_ID_HERE',\n  graph_version: 'v23.0',\n  max_per_run: 2,\n  flags: {\"Afghanistan\": \"🇦🇫\", \"Armenia\": \"🇦🇲\", \"Azerbaijan\": \"🇦🇿\", \"Bahrain\": \"🇧🇭\", \"Bangladesh\": \"🇧🇩\", \"Bhutan\": \"🇧🇹\", \"Brunei\": \"🇧🇳\", \"Cambodia\": \"🇰🇭\", \"China\": \"🇨🇳\", \"Cyprus\": \"🇨🇾\", \"Georgia\": \"🇬🇪\", \"India\": \"🇮🇳\", \"Indonesia\": \"🇮🇩\", \"Iran\": \"🇮🇷\", \"Iraq\": \"🇮🇶\", \"Israel\": \"🇮🇱\", \"Japan\": \"🇯🇵\", \"Jordan\": \"🇯🇴\", \"Kazakhstan\": \"🇰🇿\", \"Kuwait\": \"🇰🇼\", \"Kyrgyzstan\": \"🇰🇬\", \"Laos\": \"🇱🇦\", \"Lebanon\": \"🇱🇧\", \"Malaysia\": \"🇲🇾\", \"Maldives\": \"🇲🇻\", \"Mongolia\": \"🇲🇳\", \"Myanmar\": \"🇲🇲\", \"Nepal\": \"🇳🇵\", \"North Korea\": \"🇰🇵\", \"Oman\": \"🇴🇲\", \"Pakistan\": \"🇵🇰\", \"Palestine\": \"🇵🇸\", \"Philippines\": \"🇵🇭\", \"Qatar\": \"🇶🇦\", \"Saudi Arabia\": \"🇸🇦\", \"Singapore\": \"🇸🇬\", \"South Korea\": \"🇰🇷\", \"Sri Lanka\": \"🇱🇰\", \"Syria\": \"🇸🇾\", \"Taiwan\": \"🇹🇼\", \"Tajikistan\": \"🇹🇯\", \"Thailand\": \"🇹🇭\", \"Timor-Leste\": \"🇹🇱\", \"Turkey\": \"🇹🇷\", \"Turkmenistan\": \"🇹🇲\", \"United Arab Emirates\": \"🇦🇪\", \"Uzbekistan\": \"🇺🇿\", \"Vietnam\": \"🇻🇳\", \"Yemen\": \"🇾🇪\"},\n  hashtags: ['#BNNAsia', '#PressFreedom', '#HumanRights'],\n}}];\n"
+        "jsCode": "// ===== BNN Asia social settings: edit here =====\nreturn [{ json: {\n  wp_base: 'https://www.bnnasia.org',\n  card_url: 'https://api.bnnasia.org/api/v1/photocard.png',\n  facebook_page_id: '998194126711977',   // BNN Asia page\n  graph_version: 'v23.0',\n  max_per_run: 2,\n  max_per_day: 2,               // most social posts per Dhaka day\n  flags: {\"Afghanistan\": \"🇦🇫\", \"Armenia\": \"🇦🇲\", \"Azerbaijan\": \"🇦🇿\", \"Bahrain\": \"🇧🇭\", \"Bangladesh\": \"🇧🇩\", \"Bhutan\": \"🇧🇹\", \"Brunei\": \"🇧🇳\", \"Cambodia\": \"🇰🇭\", \"China\": \"🇨🇳\", \"Cyprus\": \"🇨🇾\", \"Georgia\": \"🇬🇪\", \"India\": \"🇮🇳\", \"Indonesia\": \"🇮🇩\", \"Iran\": \"🇮🇷\", \"Iraq\": \"🇮🇶\", \"Israel\": \"🇮🇱\", \"Japan\": \"🇯🇵\", \"Jordan\": \"🇯🇴\", \"Kazakhstan\": \"🇰🇿\", \"Kuwait\": \"🇰🇼\", \"Kyrgyzstan\": \"🇰🇬\", \"Laos\": \"🇱🇦\", \"Lebanon\": \"🇱🇧\", \"Malaysia\": \"🇲🇾\", \"Maldives\": \"🇲🇻\", \"Mongolia\": \"🇲🇳\", \"Myanmar\": \"🇲🇲\", \"Nepal\": \"🇳🇵\", \"North Korea\": \"🇰🇵\", \"Oman\": \"🇴🇲\", \"Pakistan\": \"🇵🇰\", \"Palestine\": \"🇵🇸\", \"Philippines\": \"🇵🇭\", \"Qatar\": \"🇶🇦\", \"Saudi Arabia\": \"🇸🇦\", \"Singapore\": \"🇸🇬\", \"South Korea\": \"🇰🇷\", \"Sri Lanka\": \"🇱🇰\", \"Syria\": \"🇸🇾\", \"Taiwan\": \"🇹🇼\", \"Tajikistan\": \"🇹🇯\", \"Thailand\": \"🇹🇭\", \"Timor-Leste\": \"🇹🇱\", \"Turkey\": \"🇹🇷\", \"Turkmenistan\": \"🇹🇲\", \"United Arab Emirates\": \"🇦🇪\", \"Uzbekistan\": \"🇺🇿\", \"Vietnam\": \"🇻🇳\", \"Yemen\": \"🇾🇪\"},\n  hashtags: ['#BNNAsia', '#PressFreedom', '#HumanRights'],\n}}];\n"
       },
-      "id": "3fcba177-59f5-4ab5-838f-bd9d5413e0df",
+      "id": "25643a2b-b2e4-4139-b3bd-718eba7846cc",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -74,7 +74,7 @@
           "timeout": 60000
         }
       },
-      "id": "f0c98528-1d1a-417c-bf34-963814eb00a1",
+      "id": "0f63ac07-453c-4248-9f87-598e180a3ee9",
       "name": "Latest posts",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -88,9 +88,9 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst SOFTEN = {\"murdered\": \"mur-dered\", \"murder\": \"mur-der\", \"murders\": \"mur-ders\", \"killed\": \"k!lled\", \"killing\": \"k!lling\", \"killings\": \"k!llings\", \"kill\": \"k!ll\", \"dead\": \"de@d\", \"death\": \"de@th\", \"deaths\": \"de@ths\", \"died\": \"d!ed\", \"shot\": \"sh0t\", \"shooting\": \"sh0oting\", \"gunmen\": \"gunm3n\", \"gun\": \"g*n\", \"stabbed\": \"st@bbed\", \"beaten\": \"be@ten\", \"torture\": \"tor-ture\", \"tortured\": \"tor-tured\", \"rape\": \"r@pe\", \"raped\": \"r@ped\", \"bomb\": \"b0mb\", \"bombing\": \"b0mbing\", \"blood\": \"bl00d\", \"suicide\": \"su!cide\", \"massacre\": \"mass@cre\", \"executed\": \"exe-cuted\", \"execution\": \"exe-cution\", \"hanged\": \"h@nged\", \"lynched\": \"lyn-ched\", \"lynching\": \"lyn-ching\", \"violence\": \"vi0lence\", \"violent\": \"vi0lent\", \"assault\": \"as-sault\", \"assaulted\": \"as-saulted\", \"attack\": \"att@ck\", \"attacked\": \"att@cked\", \"corpse\": \"c0rpse\", \"body\": \"b0dy\"};\nfunction soften(text) {\n  return String(text || '').replace(/[A-Za-z]+/g, w => {\n    const r = SOFTEN[w.toLowerCase()];\n    if (!r) return w;\n    if (w === w.toUpperCase()) return r.toUpperCase();\n    if (w[0] === w[0].toUpperCase()) return r[0].toUpperCase() + r.slice(1);\n    return r;\n  });\n}\n\nfunction decode(s) {\n  return String(s || '')\n    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(+n))\n    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&quot;/g, '\"').replace(/&apos;|&#039;/g, \"'\").replace(/&lt;/g, '<').replace(/&gt;/g, '>')\n    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')\n    .replace(/\\s+/g, ' ').trim();\n}\n\nconst cfg = $('Config').first().json;\nconst st = $getWorkflowStaticData('global');\nst.shared = st.shared || {};\nconst posts = $('Latest posts').all().map(i => i.json).filter(p => p && p.id);\nif (!st.initialised) {               // first run: everything already on the site counts as shared\n  posts.forEach(p => { st.shared[p.id] = Date.now(); });\n  st.initialised = true;\n  return [];\n}\nfor (const k of Object.keys(st.shared)) if (Date.now() - st.shared[k] > 60 * 864e5) delete st.shared[k];\nconst fresh = posts\n  .filter(p => !st.shared[p.id] && Date.now() - Date.parse(p.date_gmt + 'Z') < 24 * 3600e3)\n  .sort((a, b) => Date.parse(a.date_gmt) - Date.parse(b.date_gmt))\n  .slice(0, cfg.max_per_run);\nreturn fresh.map(p => {\n  const terms = ((p._embedded || {})['wp:term'] || []).flat();\n  const countryTerm = terms.find(t => t.taxonomy === 'country_select');\n  const country = countryTerm ? decode(countryTerm.name) : '';\n  const media = ((p._embedded || {})['wp:featuredmedia'] || [])[0] || {};\n  const sizes = (media.media_details || {}).sizes || {};\n  const image = (sizes.large || sizes.full || {}).source_url || media.source_url || '';\n  const title = decode(p.title.rendered);\n  const headline = title.replace(/^[^:]{2,40}:\\s*/, '').replace(/^ALERT\\s*\\|\\s*/i, '').trim();\n  const firstPara = decode(((p.content.rendered || '').match(/<p[\\s>][\\s\\S]*?<\\/p>/i) || [''])[0]);\n  const lead = firstPara.length > 300 ? firstPara.slice(0, 297).replace(/\\s\\S*$/, '') + '…' : firstPara;\n  const flag = cfg.flags[country] || '';\n  const tag = '#' + country.replace(/[^A-Za-z]/g, '');\n  const tags = [...cfg.hashtags, country ? tag : ''].filter(Boolean).join(' ');\n  const fb = soften(`${flag} ${country.toUpperCase()} | ${headline}\\n\\n${lead}\\n\\n📌 Full story: link in the first comment.\\n\\n${tags}`).trim();\n  let xBody = soften(`${flag} ${country.toUpperCase()}: ${headline}`);\n  const xTags = ' ' + tags;\n  const room = 280 - xBody.length - xTags.length - 4;\n  if (room > 40) xBody += '\\n\\n' + (soften(lead).length > room ? soften(lead).slice(0, room - 1).replace(/\\s\\S*$/, '') + '…' : soften(lead));\n  return { json: {\n    id: p.id, link: p.link, country, image,\n    date_label: new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),\n    card_title: soften(headline), fb_caption: fb, x_text: (xBody + xTags).slice(0, 280),\n  }};\n});\n"
+        "jsCode": "\nconst SOFTEN = {\"murdered\": \"mur-dered\", \"murder\": \"mur-der\", \"murders\": \"mur-ders\", \"killed\": \"k!lled\", \"killing\": \"k!lling\", \"killings\": \"k!llings\", \"kill\": \"k!ll\", \"dead\": \"de@d\", \"death\": \"de@th\", \"deaths\": \"de@ths\", \"died\": \"d!ed\", \"shot\": \"sh0t\", \"shooting\": \"sh0oting\", \"gunmen\": \"gunm3n\", \"gun\": \"g*n\", \"stabbed\": \"st@bbed\", \"beaten\": \"be@ten\", \"torture\": \"tor-ture\", \"tortured\": \"tor-tured\", \"rape\": \"r@pe\", \"raped\": \"r@ped\", \"bomb\": \"b0mb\", \"bombing\": \"b0mbing\", \"blood\": \"bl00d\", \"suicide\": \"su!cide\", \"massacre\": \"mass@cre\", \"executed\": \"exe-cuted\", \"execution\": \"exe-cution\", \"hanged\": \"h@nged\", \"lynched\": \"lyn-ched\", \"lynching\": \"lyn-ching\", \"violence\": \"vi0lence\", \"violent\": \"vi0lent\", \"assault\": \"as-sault\", \"assaulted\": \"as-saulted\", \"attack\": \"att@ck\", \"attacked\": \"att@cked\", \"corpse\": \"c0rpse\", \"body\": \"b0dy\"};\nfunction soften(text) {\n  return String(text || '').replace(/[A-Za-z]+/g, w => {\n    const r = SOFTEN[w.toLowerCase()];\n    if (!r) return w;\n    if (w === w.toUpperCase()) return r.toUpperCase();\n    if (w[0] === w[0].toUpperCase()) return r[0].toUpperCase() + r.slice(1);\n    return r;\n  });\n}\n\nfunction decode(s) {\n  return String(s || '')\n    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, '$1')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(+n))\n    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))\n    .replace(/&quot;/g, '\"').replace(/&apos;|&#039;/g, \"'\").replace(/&lt;/g, '<').replace(/&gt;/g, '>')\n    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')\n    .replace(/\\s+/g, ' ').trim();\n}\n\nconst cfg = $('Config').first().json;\nconst st = $getWorkflowStaticData('global');\nst.shared = st.shared || {};\nconst posts = $('Latest posts').all().map(i => i.json).filter(p => p && p.id);\nif (!st.initialised) {               // first run: everything already on the site counts as shared\n  posts.forEach(p => { st.shared[p.id] = Date.now() - 2 * 864e5; });\n  st.initialised = true;\n  return [];\n}\nfor (const k of Object.keys(st.shared)) if (Date.now() - st.shared[k] > 60 * 864e5) delete st.shared[k];\nconst dhakaDay = t => new Date(t + 6 * 3600e3).toISOString().slice(0, 10);\nconst today = dhakaDay(Date.now());\nconst sharedToday = Object.values(st.shared).filter(t => dhakaDay(t) === today).length;\nconst room = Math.max(0, Math.min(cfg.max_per_run, (cfg.max_per_day || 2) - sharedToday));\nconst fresh = posts\n  .filter(p => !st.shared[p.id] && Date.now() - Date.parse(p.date_gmt + 'Z') < 24 * 3600e3)\n  .sort((a, b) => Date.parse(a.date_gmt) - Date.parse(b.date_gmt))\n  .slice(0, room);\nreturn fresh.map(p => {\n  const terms = ((p._embedded || {})['wp:term'] || []).flat();\n  const countryTerm = terms.find(t => t.taxonomy === 'country_select');\n  const country = countryTerm ? decode(countryTerm.name) : '';\n  const media = ((p._embedded || {})['wp:featuredmedia'] || [])[0] || {};\n  const sizes = (media.media_details || {}).sizes || {};\n  const image = (sizes.large || sizes.full || {}).source_url || media.source_url || '';\n  const title = decode(p.title.rendered);\n  const headline = title.replace(/^[^:]{2,40}:\\s*/, '').replace(/^ALERT\\s*\\|\\s*/i, '').trim();\n  const firstPara = decode(((p.content.rendered || '').match(/<p[\\s>][\\s\\S]*?<\\/p>/i) || [''])[0]);\n  const lead = firstPara.length > 300 ? firstPara.slice(0, 297).replace(/\\s\\S*$/, '') + '…' : firstPara;\n  const flag = cfg.flags[country] || '';\n  const tag = '#' + country.replace(/[^A-Za-z]/g, '');\n  const tags = [...cfg.hashtags, country ? tag : ''].filter(Boolean).join(' ');\n  const fb = soften(`${flag} ${country.toUpperCase()} | ${headline}\\n\\n${lead}\\n\\n📌 Full story: link in the first comment.\\n\\n${tags}`).trim();\n  let xBody = soften(`${flag} ${country.toUpperCase()}: ${headline}`);\n  const xTags = ' ' + tags;\n  const room = 280 - xBody.length - xTags.length - 4;\n  if (room > 40) xBody += '\\n\\n' + (soften(lead).length > room ? soften(lead).slice(0, room - 1).replace(/\\s\\S*$/, '') + '…' : soften(lead));\n  return { json: {\n    id: p.id, link: p.link, country, image,\n    date_label: new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),\n    card_title: soften(headline), fb_caption: fb, x_text: (xBody + xTags).slice(0, 280),\n  }};\n});\n"
       },
-      "id": "24d664ce-c708-4982-9844-28d39fee5f94",
+      "id": "6ca22308-9c32-4c62-b4ec-a269db23476c",
       "name": "Select new posts",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -134,7 +134,7 @@
           }
         }
       },
-      "id": "417aab01-6e21-4f36-97f2-766c5b8e7ea2",
+      "id": "dde2cd41-2748-4980-8736-a40e8200eeab",
       "name": "Photocard",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -175,7 +175,7 @@
           "timeout": 120000
         }
       },
-      "id": "35204930-dc7e-47f6-8f28-70da35687b93",
+      "id": "5bd43542-b62e-41f3-861a-20ed481ff65b",
       "name": "Facebook photo",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -205,7 +205,7 @@
           "timeout": 60000
         }
       },
-      "id": "7dc0553b-c38e-4d74-a162-9ddf1298b993",
+      "id": "501ae854-a79c-46ef-893b-7768879ea33d",
       "name": "Facebook link comment",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -240,7 +240,7 @@
           "timeout": 120000
         }
       },
-      "id": "d2e67c3e-9367-462a-a754-2ec38cad5cbd",
+      "id": "0d87ad44-b7cb-4cdf-8c42-f1b363601ac6",
       "name": "X upload image",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -263,7 +263,7 @@
           "timeout": 60000
         }
       },
-      "id": "3b576158-7dc6-4cf6-bcbf-afe0126b5e13",
+      "id": "0e1fb4fd-3394-4a90-938b-a4c30919ca6f",
       "name": "X post",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -286,7 +286,7 @@
           "timeout": 60000
         }
       },
-      "id": "884176be-3ea2-4dc9-b380-8e551ba63087",
+      "id": "4f53b7b8-c3b3-418f-a4da-a605ce997681",
       "name": "X link reply",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -300,7 +300,7 @@
       "parameters": {
         "jsCode": "\nconst st = $getWorkflowStaticData('global');\nst.shared = st.shared || {};\nfor (const item of $('Select new posts').all()) st.shared[item.json.id] = Date.now();\nreturn [{ json: { shared: $('Select new posts').all().map(i => i.json.link) } }];\n"
       },
-      "id": "87337ed7-e595-47e6-9096-6f570366e9ae",
+      "id": "2a38b691-d067-4b20-8580-ad0514150fb1",
       "name": "Mark shared",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

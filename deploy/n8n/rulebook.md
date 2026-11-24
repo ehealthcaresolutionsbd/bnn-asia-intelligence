@@ -9,6 +9,8 @@ Cover a story only when it happened in one of the countries in the country list 
 2. A human rights defender, lawyer, student or civil-society activist faced the same because of peaceful activism, speech or protest.
 3. A serious human rights violation by state or powerful actors: enforced disappearance, torture or death in custody, extrajudicial killing, violent crackdown on peaceful protest, mass arbitrary arrest.
 4. A law, order or action that restricts free expression or information: internet or platform shutdowns, censorship, new cyber, defamation, "fake news" or security laws used against speech, bans on outlets or books.
+ASIA ONLY, AND ONLY A FEW
+BNN Asia is not a news channel. We publish at most 2 alerts a day, only the most serious and best-sourced incidents, and only incidents that took place inside an Asian country on the country list and are about people, media or rights in that country. A story about Asians abroad, or a foreign country's policy that merely mentions Asia, is out. On a quiet day publish one alert or none rather than a weak one.
 Do NOT cover: ordinary crime with no link to speech, media or rights; battlefield reporting unless media workers or civilians' rights are the subject; opinion or analysis pieces; announcements of reports or awards; events older than 7 days; anything outside the country list; anything we already published.
 
 ACCURACY (never break these)

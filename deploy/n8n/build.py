@@ -184,9 +184,9 @@ CONFIG_A = """// ===== BNN Asia settings: edit here =====
 const RULEBOOK = `%s`;
 return [{ json: {
   models: { fast: 'gpt-5-mini', writer: 'gpt-5', image: 'gpt-image-2' },
-  max_posts: 6,                 // most stories published per day
-  approval: 'auto',             // 'auto' = scheduled publishing, 'review' = saved as drafts for an editor
-  slots: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00'],   // Dhaka time, one story per slot
+  max_posts: 2,                 // most stories published per day (BNN Asia is not a news channel)
+  approval: 'review',           // 'auto' = scheduled publishing, 'review' = saved as drafts for an editor
+  slots: ['10:00', '16:00'],    // Dhaka time, one story per slot
   wp_base: 'https://www.bnnasia.org',
   lookback_hours: 48,
   countries: %s,
@@ -307,7 +307,7 @@ TRIAGE_BODY = r"""={{ JSON.stringify({
   reasoning_effort: 'low',
   response_format: { type: 'json_object' },
   messages: [
-    { role: 'system', content: 'You are the desk editor of BNN Asia, a press-freedom and human-rights organisation. Select which candidate news items deserve a BNN Asia country alert today.\n\nRULES FROM THE BNN ASIA RULEBOOK:\n' + $('Config').first().json.rulebook + '\n\nTASK: Group candidates that describe the same incident. Return only incidents that fit WHAT WE COVER, happened in one of these countries: ' + Object.keys($('Config').first().json.countries).join(', ') + ', and are not already covered by a recent BNN Asia post. Rank by severity (killing > enforced disappearance or abduction > imprisonment or sentence > arrest or detention > physical attack > charges or lawsuit > threats or harassment > restrictive law or shutdown) and by how many independent items report it. Return at most ' + $('Config').first().json.max_posts + ' incidents.\n\nReply with JSON only: {"stories":[{"candidate_ids":[numbers, best source first],"country":"exact country name from the list","type":"killing|abduction|imprisonment|arrest|attack|legal_harassment|threat|law_or_shutdown|other_violation","victim":"who","priority":1-5,"reason":"one sentence"}]}. Use {"stories":[]} when nothing qualifies.' },
+    { role: 'system', content: 'You are the desk editor of BNN Asia, a press-freedom and human-rights organisation. Select which candidate news items deserve a BNN Asia country alert today.\n\nRULES FROM THE BNN ASIA RULEBOOK:\n' + $('Config').first().json.rulebook + '\n\nTASK: Group candidates that describe the same incident. Return only incidents that fit WHAT WE COVER, happened in one of these countries: ' + Object.keys($('Config').first().json.countries).join(', ') + ', and are not already covered by a recent BNN Asia post. Be strict: BNN Asia publishes at most 2 alerts a day, so pick only the most serious, clearly Asian, well-sourced incidents; returning fewer or none is fine. Rank by severity (killing > enforced disappearance or abduction > imprisonment or sentence > arrest or detention > physical attack > charges or lawsuit > threats or harassment > restrictive law or shutdown) and by how many independent items report it. Return at most ' + $('Config').first().json.max_posts + ' incidents.\n\nReply with JSON only: {"stories":[{"candidate_ids":[numbers, best source first],"country":"exact country name from the list","type":"killing|abduction|imprisonment|arrest|attack|legal_harassment|threat|law_or_shutdown|other_violation","victim":"who","priority":1-5,"reason":"one sentence"}]}. Use {"stories":[]} when nothing qualifies.' },
     { role: 'user', content: JSON.stringify({ today: new Date().toISOString().slice(0, 10), recent_bnn_posts: $json.recent, candidates: $json.candidates.map(c => ({ id: c.id, title: c.title, summary: (c.summary || '').slice(0, 300), source: c.source, kind: c.kind, published: new Date(c.published).toISOString().slice(0, 16), country_hints: c.countries })) }) }
   ]
 }) }}"""
@@ -496,9 +496,10 @@ CONFIG_B = """// ===== BNN Asia social settings: edit here =====
 return [{ json: {
   wp_base: 'https://www.bnnasia.org',
   card_url: 'https://api.bnnasia.org/api/v1/photocard.png',
-  facebook_page_id: 'PUT_FACEBOOK_PAGE_ID_HERE',
+  facebook_page_id: '998194126711977',   // BNN Asia page
   graph_version: 'v23.0',
   max_per_run: 2,
+  max_per_day: 2,               // most social posts per Dhaka day
   flags: %s,
   hashtags: ['#BNNAsia', '#PressFreedom', '#HumanRights'],
 }}];
@@ -510,15 +511,19 @@ const st = $getWorkflowStaticData('global');
 st.shared = st.shared || {};
 const posts = $('Latest posts').all().map(i => i.json).filter(p => p && p.id);
 if (!st.initialised) {               // first run: everything already on the site counts as shared
-  posts.forEach(p => { st.shared[p.id] = Date.now(); });
+  posts.forEach(p => { st.shared[p.id] = Date.now() - 2 * 864e5; });
   st.initialised = true;
   return [];
 }
 for (const k of Object.keys(st.shared)) if (Date.now() - st.shared[k] > 60 * 864e5) delete st.shared[k];
+const dhakaDay = t => new Date(t + 6 * 3600e3).toISOString().slice(0, 10);
+const today = dhakaDay(Date.now());
+const sharedToday = Object.values(st.shared).filter(t => dhakaDay(t) === today).length;
+const room = Math.max(0, Math.min(cfg.max_per_run, (cfg.max_per_day || 2) - sharedToday));
 const fresh = posts
   .filter(p => !st.shared[p.id] && Date.now() - Date.parse(p.date_gmt + 'Z') < 24 * 3600e3)
   .sort((a, b) => Date.parse(a.date_gmt) - Date.parse(b.date_gmt))
-  .slice(0, cfg.max_per_run);
+  .slice(0, room);
 return fresh.map(p => {
   const terms = ((p._embedded || {})['wp:term'] || []).flat();
   const countryTerm = terms.find(t => t.taxonomy === 'country_select');
