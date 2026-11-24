@@ -425,13 +425,20 @@ if (!b64) return { json: { ...meta, image_error: $json.error ? JSON.stringify($j
 return { json: meta, binary: { image: { data: b64, mimeType: 'image/jpeg', fileName: meta.slug + '.jpg', fileExtension: 'jpg' } } };
 """
 
-POST_BODY = r"""={{ JSON.stringify(Object.assign({}, $('Image file').item.json.post, { featured_media: ($('Upload image').item.json && $('Upload image').item.json.id) || 0 })) }}"""
-
-SEO_BODY = r"""={{ JSON.stringify({ objectID: $json.id, objectType: 'post', meta: $('Image file').item.json.seo }) }}"""
+POST_BODY = r"""={{ JSON.stringify({
+  title: $('Image file').item.json.post.title,
+  content: $('Image file').item.json.post.content,
+  status: $('Image file').item.json.post.status,
+  date_gmt: $('Image file').item.json.post.date_gmt,
+  slug: $('Image file').item.json.post.slug,
+  country_id: $('Image file').item.json.post.country_select[0],
+  featured_media: ($json && $json.id) || 0,
+  seo: { title: $('Image file').item.json.seo.rank_math_title, description: $('Image file').item.json.seo.rank_math_description, focus_keyword: $('Image file').item.json.seo.rank_math_focus_keyword }
+}) }}"""
 
 SUMMARY_A = r"""
 const rows = $('Create post').all().map(i => i.json).filter(p => p && p.id);
-return [{ json: { published_or_scheduled: rows.length, posts: rows.map(p => ({ id: p.id, status: p.status, date: p.date, title: p.title && (p.title.raw || p.title.rendered), link: p.link })) } }];
+return [{ json: { published_or_scheduled: rows.length, posts: rows.map(p => ({ id: p.id, status: p.status, date: p.date, link: p.link })) } }];
 """
 
 
@@ -465,23 +472,19 @@ def build_a():
         http("Make image (AI)", [3080, 100], "POST", "https://api.openai.com/v1/images/generations", auth="openAiApi",
              json_body=IMAGE_BODY, timeout=300000, retry=True),
         code("Image file", TOFILE_A, [3300, 100], each=True),
-        http("Upload image", [3520, 100], "POST", "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/media",
-             auth="wordpressApi", binary_field="image",
-             headers=[("Content-Disposition", "=attachment; filename=\"{{ $json.slug }}.jpg\""), ("Content-Type", "image/jpeg")]),
-        http("Image details", [3740, 100], "POST",
-             "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/media/{{ $json.id }}", auth="wordpressApi",
-             json_body="={{ JSON.stringify({ alt_text: $('Image file').item.json.image.alt, caption: $('Image file').item.json.image.caption, title: $('Image file').item.json.post.title, description: $('Image file').item.json.image.alt }) }}"),
-        http("Create post", [3960, 100], "POST",
-             "={{ $('Config').first().json.wp_base }}/wp-json/wp/v2/country_news", auth="wordpressApi",
+        http("Upload image", [3520, 100], "POST", "={{ $('Config').first().json.wp_base }}/wp-json/bnn-autopilot/v1/media",
+             generic="httpHeaderAuth", binary_field="image",
+             query=[("filename", "={{ $json.slug }}"), ("alt", "={{ $json.image.alt }}"),
+                    ("caption", "={{ $json.image.caption }}"), ("title", "={{ $json.post.title }}")],
+             headers=[("Content-Type", "image/jpeg")]),
+        http("Create post", [3740, 100], "POST",
+             "={{ $('Config').first().json.wp_base }}/wp-json/bnn-autopilot/v1/post", generic="httpHeaderAuth",
              json_body=POST_BODY, on_error=False, retry=True),
-        http("SEO (Rank Math)", [4180, 100], "POST",
-             "={{ $('Config').first().json.wp_base }}/wp-json/rankmath/v1/updateMeta", auth="wordpressApi",
-             json_body=SEO_BODY),
-        code("Summary", SUMMARY_A, [4400, 100]),
+        code("Summary", SUMMARY_A, [3960, 100]),
     ]
     names = ["Config", "Sources", "Fetch feeds", "Parse feeds", "Recent BNN posts", "Candidates", "Triage (AI)",
              "Pick stories", "Fetch article", "Extract text", "Write (AI)", "Check (AI)", "Approve", "Make image (AI)",
-             "Image file", "Upload image", "Image details", "Create post", "SEO (Rank Math)", "Summary"]
+             "Image file", "Upload image", "Create post", "Summary"]
     conns = merge(chain("Every day 08:00", "Config"), chain("Run now (test)", "Config"), chain(*names))
     return workflow("BNN Asia · Rights Monitor (daily 08:00)", nodes, conns)
 
