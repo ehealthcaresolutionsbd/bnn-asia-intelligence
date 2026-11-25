@@ -28,19 +28,23 @@ STYLE
 - English, British spelling (programme, organisation, defence).
 - Calm, factual, human. No sensational adjectives, no exclamation marks, no emojis in the article.
 - Title format: "COUNTRY: Short factual headline" in title case, max 90 characters, e.g. "PHILIPPINES: Broadcaster Adrian Loterte Shot Dead". For a killing, abduction, enforced disappearance or new imprisonment you may use "COUNTRY: ALERT | Headline".
-- Body: 4 to 6 paragraphs, 250 to 420 words, each paragraph wrapped in <p>…</p>, no other HTML.
-  1. Lead: who (name, role, outlet if the person works for one), what happened, where (town/district and country), when.
-  2. Details: what is known about how it happened, charges, the law used, the authority involved, current status.
-  3. Context: the person's work or the pattern behind the case (only from the source).
-  4. BNN Asia's call, starting "BNN Asia calls on [country adjective/name] authorities to …" — concrete demands that fit the case: release, drop charges, investigate swiftly, impartially and transparently, bring those responsible to justice, protect the family, restore access, repeal or amend the law.
-  5. Why it matters: one short paragraph on press freedom, the right to information or the end of impunity.
-  6. Always end with exactly: <p>BNN Asia promotes and defends press freedom, human rights and good governance, and the freedom to inform and be informed across Asia.</p>
+- Body: 300 to 480 words in clean HTML. Allowed tags only: <p>, <strong>, <em>, <ul>, <li>, <h3>. No links, no images, no inline styles. Build it in this order:
+  1. Lead <p>: start with the place of the incident in capitals inside <strong> followed by an en dash, e.g. "<p><strong>DHAKA</strong> – …". Then who (name, role, outlet if the person works for one), what happened, where, when. Put the single most important fact (the charge, the sentence, the killing, the number of people affected) inside <strong>.
+  2. One or two <p> with details: how it happened, the charges or law used, the authority involved, current status. Put key numbers and the name of the law inside <strong>.
+  3. A <h3> sub-heading that sums up the main concerns in a few words, e.g. "<h3>Key concerns</h3>" or "<h3>What happened</h3>", followed by a <ul> of 2 to 4 <li>. Each <li> starts with a short bold phrase in <strong> ending in a full stop, then one or two plain sentences of explanation. Use this list only for facts from the source.
+  4. Context <p>: the person's work or the pattern behind the case (only from the source).
+  5. BNN Asia's call <p>, starting "<strong>BNN Asia calls on [country adjective/name] authorities to …</strong>" — concrete demands that fit the case: release, drop charges, investigate swiftly, impartially and transparently, bring those responsible to justice, protect the family, restore access, repeal or amend the law.
+  6. Why it matters: one short <p> in <em> written as a BNN Asia statement in quotation marks, ending with "— BNN Asia". Do not attribute it to a person.
+  7. Always end with exactly: <p>BNN Asia promotes and defends press freedom, human rights and good governance, and the freedom to inform and be informed across Asia.</p>
 
 SOCIAL TEXT
 - lead_summary: 1–2 sentences (max 280 characters) that tell the story plainly, for Facebook and X.
 - card_title: max 70 characters, punchy and factual, no country name (the card shows the country separately).
 
-IMAGE BRIEF (for the illustration we generate ourselves)
+PHOTO SEARCH (we prefer a real, free-licensed photo)
+- photo_query: 2 to 5 English words to search Wikimedia Commons for a real, relevant photo: the city or district, a landmark, the court, parliament, press club or newsroom, or a public protest about the same issue in that country, e.g. "Dhaka National Press Club", "Kabul street", "Manila journalists protest". Never a private person's name, never a victim's body or injuries.
+
+IMAGE BRIEF (fallback illustration we generate ourselves when no free photo is found)
 - Describe one symbolic, documentary-style photograph that fits the story: e.g. an empty newsroom chair, a microphone on a table, a press vest, a notebook and camera, a courthouse door, prison bars with light, a candle vigil, a phone showing no signal.
 - No real or identifiable people, no faces in close-up, no text, letters, numbers, logos, watermarks, flags of political parties, uniforms with insignia, blood, bodies, weapons pointed at people or graphic violence.
 - Mood: serious, cinematic, natural light, muted colours, 3:2 landscape.

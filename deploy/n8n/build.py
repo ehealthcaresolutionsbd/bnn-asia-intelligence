@@ -185,8 +185,8 @@ const RULEBOOK = `%s`;
 return [{ json: {
   models: { fast: 'gpt-5-mini', writer: 'gpt-5', image: 'gpt-image-2' },
   max_posts: 2,                 // most stories published per day (BNN Asia is not a news channel)
-  approval: 'review',           // 'auto' = scheduled publishing, 'review' = saved as drafts for an editor
-  slots: ['10:00', '16:00'],    // Dhaka time, one story per slot
+  approval: 'auto',             // 'auto' = scheduled publishing, 'review' = saved as drafts for an editor
+  run_window: [8, 23],          // Dhaka hours: runs once a day at a random time between 08:00 and 23:59
   wp_base: 'https://www.bnnasia.org',
   lookback_hours: 48,
   countries: %s,
@@ -356,7 +356,7 @@ WRITE_BODY = r"""={{ JSON.stringify({
   reasoning_effort: 'medium',
   response_format: { type: 'json_object' },
   messages: [
-    { role: 'system', content: $('Config').first().json.rulebook + '\n\nCOUNTRY LIST: ' + Object.keys($('Config').first().json.countries).join(', ') + '\n\nWrite one BNN Asia country alert from the material the user gives you. Reply with JSON only, keys: {"reject":false,"reject_reason":"","country":"exact name from the country list","title":"","body_html":"","lead_summary":"","card_title":"","seo_title":"max 60 characters","seo_description":"max 155 characters","focus_keyword":"","slug":"lowercase-words-with-hyphens, max 8 words","image_prompt":"","image_alt":""}. Set reject:true with a reason if the material does not meet the rulebook.' },
+    { role: 'system', content: $('Config').first().json.rulebook + '\n\nCOUNTRY LIST: ' + Object.keys($('Config').first().json.countries).join(', ') + '\n\nWrite one BNN Asia country alert from the material the user gives you. Reply with JSON only, keys: {"reject":false,"reject_reason":"","country":"exact name from the country list","title":"","body_html":"","lead_summary":"","card_title":"","seo_title":"max 60 characters","seo_description":"max 155 characters","focus_keyword":"","slug":"lowercase-words-with-hyphens, max 8 words","photo_query":"","image_prompt":"","image_alt":""}. Set reject:true with a reason if the material does not meet the rulebook.' },
     { role: 'user', content: JSON.stringify({ today: new Date().toISOString().slice(0, 10), country_hint: $json.country, incident_type: $json.type, victim_hint: $json.victim, first_reported: $json.published, source_headline: $json.source_title, source_text: $json.source_text, other_reports: $json.other_reports }) }
   ]
 }) }}"""
@@ -378,8 +378,6 @@ const out = [];
 const checks = $input.all();
 const drafts = $('Write (AI)').all();
 const facts = $('Extract text').all();
-const dhakaToday = new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 10);
-let slot = 0;
 checks.forEach((item, i) => {
   let d = {}, q = {};
   try { d = JSON.parse(drafts[i].json.choices[0].message.content); } catch (e) { return; }
@@ -389,20 +387,30 @@ checks.forEach((item, i) => {
   const country = cfg.countries[d.country] ? d.country : facts[i].json.country;
   const term = cfg.countries[country];
   if (!term || !d.title || !d.body_html) return;
-  let body = String(d.body_html).replace(/<(?!\/?p\b)[^>]*>/gi, '').trim();
+  // Clean HTML: keep only the allowed tags, then add BNN Asia colours and the press-release footer.
+  let body = String(d.body_html)
+    .replace(/<(?!\/?(p|strong|em|ul|li|h3)\b)[^>]*>/gi, '')
+    .replace(/<(p|strong|em|ul|li|h3)\b[^>]*>/gi, '<$1>')
+    .trim();
   if (!body.includes('freedom to inform and be informed')) body += '\n' + ENDING;
-  body = body.replace(/<\/p>\s*<p>/g, '</p>\n\n<p>');
-  // Schedule: next free slot today (Dhaka), otherwise a few minutes from now.
-  const hhmm = cfg.slots[slot++] || cfg.slots[cfg.slots.length - 1];
-  let when = Date.parse(dhakaToday + 'T' + hhmm + ':00+06:00');
-  if (when < Date.now() + 5 * 60e3) when = Date.now() + (10 + 15 * i) * 60e3;
+  body = body
+    .replace(/<strong>/g, '<strong style="color:#c8102e;">')
+    .replace(/<h3>/g, '<h3 style="color:#c8102e;font-size:1.1em;margin-top:1.4em;">')
+    .replace(/<ul>/g, '<ul style="margin-left:1.2em;">')
+    .replace(/<li>/g, '<li style="margin-bottom:.6em;">')
+    .replace(/(<\/(p|ul|h3)>)\s*/g, '$1\n\n');
+  body += '\n<p style="text-align:center;color:#c8102e;font-weight:700;letter-spacing:.2em;">###</p>\n\n'
+       + '<h3 style="color:#c8102e;font-size:1.1em;">About BNN Asia</h3>\n\n'
+       + '<p>Borderless News Network Asia (BNN Asia) is an independent organisation that promotes and defends press freedom, human rights and good governance across Asia. It monitors attacks on journalists, online activists and human rights defenders and calls for justice for those targeted.</p>';
+  // Publish now (approval auto) or save as draft for an editor.
   const scheduled = cfg.approval === 'auto';
+  const when = Date.now();
   const slug = String(d.slug || d.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70);
   out.push({ json: {
-    post: { title: d.title.trim(), content: body, status: scheduled ? 'future' : 'draft',
+    post: { title: d.title.trim(), content: body, status: scheduled ? 'publish' : 'draft',
             date_gmt: new Date(when).toISOString().slice(0, 19), slug, country_select: [term.id] },
     seo: { rank_math_title: d.seo_title || d.title, rank_math_description: d.seo_description || d.lead_summary || '', rank_math_focus_keyword: d.focus_keyword || '' },
-    image: { prompt: d.image_prompt || ('Symbolic documentary photograph about press freedom in ' + country), alt: d.image_alt || ('Illustration for a BNN Asia alert on ' + country), caption: 'Illustration: BNN Asia' },
+    image: { query: d.photo_query || ('' + country + ' journalists'), prompt: d.image_prompt || ('Symbolic documentary photograph about press freedom in ' + country), alt: d.image_alt || ('Illustration for a BNN Asia alert on ' + country), caption: 'Illustration: BNN Asia' },
     country, slug, checker_notes: q.problems || [],
   }});
 });
@@ -419,21 +427,57 @@ IMAGE_BODY = r"""={{ JSON.stringify({
 }) }}"""
 
 TOFILE_A = r"""
-const meta = $('Approve').item.json;
+const meta = $('Has free photo?').item.json;
 const b64 = $json.data && $json.data[0] && $json.data[0].b64_json;
 if (!b64) return { json: { ...meta, image_error: $json.error ? JSON.stringify($json.error).slice(0, 300) : 'no image' } };
 return { json: meta, binary: { image: { data: b64, mimeType: 'image/jpeg', fileName: meta.slug + '.jpg', fileExtension: 'jpg' } } };
 """
 
+PHOTO_A = r"""
+// Look for a real, free-licensed photo on Wikimedia Commons (CC BY, CC BY-SA, CC0 or public domain).
+// Credit the photographer under the post. If nothing suitable is found, flag the item for an AI illustration.
+const meta = $json;
+const OK = /^(cc[- ]?by(-sa)?([- ]\d(\.\d)?)?|cc0|public domain|pd\b)/i;
+const UA = { 'User-Agent': 'BNNAsiaMonitor/1.0 (https://www.bnnasia.org; info@bnnasia.org)' };
+const queries = [meta.image.query, meta.country + ' press freedom', meta.country + ' city'].filter(Boolean);
+try {
+  for (const q of queries) {
+    const r = await this.helpers.httpRequest({ url: 'https://commons.wikimedia.org/w/api.php', headers: UA, json: true,
+      qs: { action: 'query', format: 'json', generator: 'search', gsrnamespace: 6, gsrsearch: q + ' filetype:bitmap',
+            gsrlimit: 25, prop: 'imageinfo', iiprop: 'url|extmetadata|size|mime', iiurlwidth: 1600 } });
+    const pages = Object.values((r.query || {}).pages || {}).sort((a, b) => a.index - b.index);
+    for (const pg of pages) {
+      const ii = (pg.imageinfo || [])[0];
+      if (!ii || ii.mime !== 'image/jpeg' || ii.width < 1200 || ii.width < ii.height) continue;
+      if (/corpse|dead|blood|injur|wound|nude|logo|map|flag|coat of arms|diagram|chart/i.test(pg.title)) continue;
+      const m = ii.extmetadata || {};
+      const lic = String((m.LicenseShortName || {}).value || '');
+      if (!OK.test(lic) || /nc|nd/i.test(lic)) continue;
+      const artist = String((m.Artist || {}).value || 'Unknown').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 80);
+      const licUrl = String((m.LicenseUrl || {}).value || '');
+      const buf = await this.helpers.httpRequest({ url: ii.thumburl || ii.url, headers: UA, encoding: 'arraybuffer' });
+      const credit = `Photo: ${artist} / ${lic}, via Wikimedia Commons`;
+      const creditHtml = `<p style="font-size:.85em;color:#666;"><em>Photo: <a href="${ii.descriptionurl}" rel="nofollow noopener" target="_blank">${artist}</a> / `
+        + (licUrl ? `<a href="${licUrl}" rel="nofollow noopener" target="_blank">${lic}</a>` : lic) + `, via Wikimedia Commons</em></p>\n\n`;
+      const content = meta.post.content.replace('<p style="text-align:center;', creditHtml + '<p style="text-align:center;');
+      const alt = String((m.ImageDescription || {}).value || meta.image.alt).replace(/<[^>]+>/g, '').trim().slice(0, 125);
+      return { json: { ...meta, post: { ...meta.post, content }, image: { ...meta.image, alt, caption: credit }, photo_source: ii.descriptionurl, need_ai: false },
+               binary: { image: await this.helpers.prepareBinaryData(Buffer.from(buf), meta.slug + '.jpg', 'image/jpeg') } };
+    }
+  }
+} catch (e) { /* fall back to an illustration */ }
+return { json: { ...meta, need_ai: true } };
+"""
+
 POST_BODY = r"""={{ JSON.stringify({
-  title: $('Image file').item.json.post.title,
-  content: $('Image file').item.json.post.content,
-  status: $('Image file').item.json.post.status,
-  date_gmt: $('Image file').item.json.post.date_gmt,
-  slug: $('Image file').item.json.post.slug,
-  country_id: $('Image file').item.json.post.country_select[0],
+  title: $('Image ready').item.json.post.title,
+  content: $('Image ready').item.json.post.content,
+  status: $('Image ready').item.json.post.status,
+  date_gmt: $('Image ready').item.json.post.date_gmt,
+  slug: $('Image ready').item.json.post.slug,
+  country_id: $('Image ready').item.json.post.country_select[0],
   featured_media: ($json && $json.id) || 0,
-  seo: { title: $('Image file').item.json.seo.rank_math_title, description: $('Image file').item.json.seo.rank_math_description, focus_keyword: $('Image file').item.json.seo.rank_math_focus_keyword }
+  seo: { title: $('Image ready').item.json.seo.rank_math_title, description: $('Image ready').item.json.seo.rank_math_description, focus_keyword: $('Image ready').item.json.seo.rank_math_focus_keyword }
 }) }}"""
 
 SUMMARY_A = r"""
@@ -442,11 +486,27 @@ return [{ json: { published_or_scheduled: rows.length, posts: rows.map(p => ({ i
 """
 
 
+GATE_A = r"""
+// Runs every hour 08:00-23:00 Dhaka. Picks one random hour per day and lets only that run through,
+// then waits a random number of minutes, so posts go out at a different time each day.
+const st = $getWorkflowStaticData('global');
+const now = new Date(Date.now() + 6 * 3600e3);          // Dhaka clock
+const day = now.toISOString().slice(0, 10), hour = now.getUTCHours();
+if (st.gateDay !== day) { st.gateDay = day; st.gateHour = 8 + Math.floor(Math.random() * 16); st.gateDone = false; }
+if (st.gateDone || hour < st.gateHour) return [];
+st.gateDone = true;
+return [{ json: { wait_minutes: Math.floor(Math.random() * 50), day, hour } }];
+"""
+
+
 def build_a():
     X = 0
     nodes = [
-        {"parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 8 * * *"}]}}, "id": nid(),
-         "name": "Every day 08:00", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [X, 0]},
+        {"parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 8-23 * * *"}]}}, "id": nid(),
+         "name": "Hourly 08-23", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [X - 660, 0]},
+        code("Random time gate", GATE_A, [X - 440, 0]),
+        {"parameters": {"amount": "={{ $json.wait_minutes }}", "unit": "minutes"}, "id": nid(), "name": "Random wait",
+         "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [X - 220, 0], "webhookId": nid()},
         {"parameters": {}, "id": nid(), "name": "Run now (test)", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1,
          "position": [X, 200]},
         code("Config", CONFIG_A, [220, 100]),
@@ -469,9 +529,16 @@ def build_a():
         http("Check (AI)", [2640, 100], "POST", "https://api.openai.com/v1/chat/completions", auth="openAiApi",
              json_body=CHECK_BODY, timeout=300000, on_error=False, retry=True),
         code("Approve", APPROVE_A, [2860, 100]),
-        http("Make image (AI)", [3080, 100], "POST", "https://api.openai.com/v1/images/generations", auth="openAiApi",
+        code("Find free photo", PHOTO_A, [2970, 100], each=True),
+        {"parameters": {"conditions": {"options": {"caseSensitive": True, "typeValidation": "loose", "version": 2},
+                        "conditions": [{"id": nid(), "leftValue": "={{ $json.need_ai }}", "rightValue": False,
+                                        "operator": {"type": "boolean", "operation": "false", "singleValue": True}}],
+                        "combinator": "and"}, "looseTypeValidation": True, "options": {}},
+         "id": nid(), "name": "Has free photo?", "type": "n8n-nodes-base.if", "typeVersion": 2.2, "position": [3080, 100]},
+        http("Make image (AI)", [3190, 260], "POST", "https://api.openai.com/v1/images/generations", auth="openAiApi",
              json_body=IMAGE_BODY, timeout=300000, retry=True),
-        code("Image file", TOFILE_A, [3300, 100], each=True),
+        code("Image file", TOFILE_A, [3300, 260], each=True),
+        {"parameters": {}, "id": nid(), "name": "Image ready", "type": "n8n-nodes-base.merge", "typeVersion": 3, "position": [3410, 100]},
         http("Upload image", [3520, 100], "POST", "={{ $('Config').first().json.wp_base }}/wp-json/bnn-autopilot/v1/media",
              generic="httpHeaderAuth", binary_field="image",
              query=[("filename", "={{ $json.slug }}"), ("alt", "={{ $json.image.alt }}"),
@@ -481,12 +548,19 @@ def build_a():
              "={{ $('Config').first().json.wp_base }}/wp-json/bnn-autopilot/v1/post", generic="httpHeaderAuth",
              json_body=POST_BODY, on_error=False, retry=True),
         code("Summary", SUMMARY_A, [3960, 100]),
+        {"parameters": {"source": "database", "workflowId": {"__rl": True, "value": "kOLTbtwFAQBPp11f", "mode": "id"},
+                        "options": {"waitForSubWorkflow": False}},
+         "id": nid(), "name": "Post to social now", "type": "n8n-nodes-base.executeWorkflow", "typeVersion": 1.2,
+         "position": [4180, 100]},
     ]
     names = ["Config", "Sources", "Fetch feeds", "Parse feeds", "Recent BNN posts", "Candidates", "Triage (AI)",
-             "Pick stories", "Fetch article", "Extract text", "Write (AI)", "Check (AI)", "Approve", "Make image (AI)",
-             "Image file", "Upload image", "Create post", "Summary"]
-    conns = merge(chain("Every day 08:00", "Config"), chain("Run now (test)", "Config"), chain(*names))
-    return workflow("BNN Asia · Rights Monitor (daily 08:00)", nodes, conns)
+             "Pick stories", "Fetch article", "Extract text", "Write (AI)", "Check (AI)", "Approve", "Find free photo", "Has free photo?"]
+    tail = ["Image ready", "Upload image", "Create post", "Summary", "Post to social now"]
+    conns = merge(chain("Hourly 08-23", "Random time gate", "Random wait", "Config"), chain("Run now (test)", "Config"), chain(*names), chain(*tail),
+                  {"Has free photo?": {"main": [[{"node": "Image ready", "type": "main", "index": 0}], [{"node": "Make image (AI)", "type": "main", "index": 0}]]}},
+                  chain("Make image (AI)", "Image file"),
+                  {"Image file": {"main": [[{"node": "Image ready", "type": "main", "index": 1}]]}})
+    return workflow("BNN Asia · Rights Monitor (daily, random 08–24)", nodes, conns)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -563,6 +637,8 @@ def build_b():
     nodes = [
         {"parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "*/15 * * * *"}]}}, "id": nid(),
          "name": "Every 15 minutes", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0]},
+        {"parameters": {"inputSource": "passthrough"}, "id": nid(), "name": "Called by Rights Monitor",
+         "type": "n8n-nodes-base.executeWorkflowTrigger", "typeVersion": 1.1, "position": [0, 400]},
         {"parameters": {}, "id": nid(), "name": "Run now (test)", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1,
          "position": [0, 200]},
         code("Config", CONFIG_B, [220, 100]),
@@ -592,7 +668,7 @@ def build_b():
         code("Mark shared", MARK_B, [1760, 100]),
     ]
     conns = merge(
-        chain("Every 15 minutes", "Config"), chain("Run now (test)", "Config"),
+        chain("Every 15 minutes", "Config"), chain("Run now (test)", "Config"), chain("Called by Rights Monitor", "Config"),
         chain("Config", "Latest posts", "Select new posts", "Photocard"),
         chain("Photocard", "Facebook photo", "Facebook link comment", "Mark shared"),
         chain("Photocard", "X upload image", "X post", "Mark shared")  # X link reply off: a post with a URL costs $0.20 on X,
